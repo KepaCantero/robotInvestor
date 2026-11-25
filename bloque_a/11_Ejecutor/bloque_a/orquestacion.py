@@ -83,6 +83,7 @@ from .herramientas.ht08_monitor import Monitor
 from .interfaz_broker import ConsultasBroker, Credenciales
 from .llm import LLMClient, Uso
 from .motor import Motor
+from .procedencia import cumple_ps1, enlazar_documentos, umbral_similitud
 from .redaccion import Redaccion
 from .referencias import Referencias, conocible_desde
 from .seguimiento import Seguimientos
@@ -177,7 +178,12 @@ class Bloque:
         self.almacen = Almacen(carpeta_estado, self.reloj)
         self.carpeta_entregables = Path(carpeta_entregables or (cfg.get("rutas") or {}).get("entregables", "./entregables"))
         self.contabilidad = Contabilidad(cfg)
-        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")))
+        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")),
+                               objetivo_ingesta_s=cfg["paralelismo"].get("objetivo_ingesta_s"),
+                               factor_tiempo=parametro(cfg, "paralelismo.factor_tiempo"),
+                               rho_objetivo=parametro(cfg, "paralelismo.rho_objetivo"),
+                               rho_cierre=parametro(cfg, "paralelismo.rho_cierre"),
+                               lecturas_cierre=parametro(cfg, "paralelismo.lecturas_cierre"))
         self.cache = CacheResultados(Path(carpeta_estado) / "cache_resultados.jsonl")
         self.cliente = cliente
         self.agentes = Agentes(cfg, cliente, self.almacen, self.contabilidad, self.monitor, self.cache)
@@ -185,6 +191,7 @@ class Bloque:
             self.agentes.clientes["AG-11"] = cliente_contradictor
         self.motor = Motor(self.almacen, proveedor, cfg, self.contabilidad)
         self.referencias = Referencias(cfg)
+        self.referencias.registro_bajas_f9 = self.almacen.carpeta / "F9_bajas.md"
         # T-125 r02 (QA r01, H-04): el Evaluador valida la fuente de los pronósticos de fuentes contra F9
         self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo, referencias=self.referencias)
         self.mensajeria = Mensajeria(self.almacen, self.v6)
@@ -327,6 +334,8 @@ class Bloque:
             return None
         if r.datos is not None:
             r.datos = self._real(r.datos)
+            if presupuesto is not None:
+                presupuesto.registrar_fase_servida(bolsa, fase)
         return r
 
     def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r, prefijo: int | None = None) -> None:
@@ -369,7 +378,9 @@ class Bloque:
         valor = f"control {fase} (R16): la verificación no se recorta" if control else f"fase {fase}: puede cambiar el top-3"
         self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "AUT", "id": self.almacen.nuevo_id("AUT"), "run_id": run_id,
                                               "solicitante": "AG-02", "bolsa": bolsa, "presupuesto_base": asignado,
+                                              "condiciones": [f"Ampliación de {falta:.4f} UC; límite resultante {presupuesto.limite(bolsa):.4f} UC"] if autoriza else [],
                                               "ampliacion_uc": round(falta, 4), "valor_informacion": valor,
+                                              **presupuesto.valor_ganado(bolsa, fase),
                                               "decision": "AUTORIZADA" if autoriza else "DENEGADA",
                                               "motivo": "dentro del tope de ampliación" if autoriza else "supera el tope o la fase no cambia la decisión"})
         return autoriza
@@ -602,6 +613,12 @@ class Bloque:
     def ciclo(self, as_of=None, tipo: str = "PERIODICO", alcance: dict | None = None, nivel_forzado: str | None = None,
               horizontes: list[str] | None = None, disparador: dict | None = None, prioridad: str = "NORMAL",
               presupuesto_override: dict[str, float] | None = None) -> dict:
+        try:
+            fraccion = parametro(self.cfg, "presupuesto_uc.rotacion_exploratoria")
+        except KeyError as exc:
+            raise ValueError("Fracción de rotación exploratoria fuera de rango") from exc
+        if isinstance(fraccion, bool) or not isinstance(fraccion, (int, float)) or not 0 <= fraccion <= 1:
+            raise ValueError("Fracción de rotación exploratoria fuera de rango")
         instante = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp.now(tz=self.reloj.zona)
         if instante.tzinfo is not None:
             instante = instante.tz_convert(self.reloj.zona).tz_localize(None)
@@ -609,6 +626,8 @@ class Bloque:
         respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
         self.consultas.huerfanas()   # T-174 r03 (H-07): avisa una vez de cada revisión C2 EN_CURSO cuyo proceso murió
         run_id = self.almacen.nuevo_id("RUN")
+        from .mantenimiento_fuentes import revisar_bajas
+        revisar_bajas(self, as_of, run_id)
         limitaciones: list[str] = []
         # T-158 (F0): el receptor revisa las guías CT-18 antes de aplicarlas; un ítem que contradice una regla no se aplica,
         # queda un COR- y un P3- en HA y el Orquestador lo retira (R23, PB-48)
@@ -700,7 +719,6 @@ class Bloque:
             futuros = {c: ex.submit(self._analizar_clase_en_ambito, *args) for c, args in tareas.items()}
             analisis = {c: futuros[c].result() for c in clases}
         presupuesto.liquidar_primas()   # T-88: tras la fase en paralelo, el reparto de las primas de caché ya no depende del orden
-        registrar_carga(self.almacen, self.monitor.evaluar_instancias(), run_id)   # T-178: ORD-, CAR- y P3- si se repite
 
         # T-101 (V6): Prospectiva una vez por ciclo para las finalistas de todos los tipos, en lotes con control de cobertura
         global_v6 = self.v6 and v6.op(self, "prospectiva.global")
@@ -711,6 +729,7 @@ class Bloque:
         # Registro de evidencia (F2) y asignación de identificadores en orden determinista
         for c in clases:
             self._registrar_evidencia_clase(analisis[c], as_of, run_id, presupuesto)
+        registrar_carga(self.almacen, self.monitor.evaluar_instancias(), run_id)   # T-178: ORD-, CAR- y P3- si se repite
         # Clústeres de exposición entre todas las finalistas (ML-CLUS-001)
         clusteres = self._clusteres(analisis, as_of, run_id)
         if global_v6:
@@ -775,6 +794,8 @@ class Bloque:
         resultado["entregables"] = entreg
         resultado["g3_entregables"] = g3b
         if g3b["dictamen"] == "BLOQUEADO":
+            if g3b.get("modo") == "G3_MANUAL":
+                resultado["g3"] = g3b
             resultado["estado"] = "PARCIAL"
             resultado["entrega"] = "BLOQUEADA"
             self._registrar_run(resultado, analisis, seleccion, presupuesto, gc0, disparador, alcance, hz_interes, prioridad, [], [])
@@ -982,6 +1003,13 @@ class Bloque:
             vistos = {simbolo_seguimiento(v) for v in vigentes}
             rot = sorted([u["simbolo"] for u in universo if u["simbolo"] not in vistos],
                          key=lambda s: hashlib.sha256(f"{as_of.date()}{s}".encode()).hexdigest())[:int(parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))]
+            fraccion = parametro(self.cfg, "presupuesto_uc.rotacion_exploratoria")
+            uc_cribado = presupuesto.asignado[clase] * parametro(self.cfg, "presupuesto_uc.reparto_fases.cribado")
+            uc_rotacion = uc_cribado * fraccion if rot else 0.0
+            if not uc_rotacion:
+                rot = []
+            out["cribado_n1"] = {"uc_cribado": uc_cribado, "uc_rotacion": uc_rotacion,
+                                 "uc_vigentes": uc_cribado - uc_rotacion, "simbolos": rot}
             if not vigentes and not rot:
                 out["regimen"] = "Sin cambios materiales; sin opciones vigentes que revisar."
                 return out
@@ -1003,6 +1031,8 @@ class Bloque:
                "horizontes_interes": hz_interes, "max_candidatas": parametro(self.cfg, "seleccion.max_candidatas"), "max_finalistas": parametro(self.cfg, "seleccion.max_finalistas"),
                "umbral_senal_gc1": (v6.umbral_gc1(self, clase) if v6.activo(self, "gc1.por_codigo")
                                     else parametro(self.cfg, "seleccion.umbral_senal_gc1")), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
+        if "cribado_n1" in out:
+            msg["reparto_cribado"] = out["cribado_n1"]
         instr = INSTR[fase].format(max_cand=parametro(self.cfg, "seleccion.max_candidatas"), max_fin=parametro(self.cfg, "seleccion.max_finalistas"),
                                    max_pet=parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"),
                                    max_expl=parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))
@@ -1144,13 +1174,22 @@ class Bloque:
         datos, hall = sanear_estructura(r.datos, f"{agente}:{run_id}")
         piezas = []
         ofrecidas = {x["ref_id"] for x in cand["referencias"] if x.get("anio") is not None}
-        for ref in datos.get("referencias", [])[:3]:
+        contaminadas = {"REF-" + h["origen"].removeprefix("F9:") for h in cand.get("hallazgos_r9", []) if h["origen"].startswith("F9:")}
+        retiradas = self.referencias.retiradas_f9(as_of)
+        for indice, ref in enumerate(datos.get("referencias", [])[:3]):
+            if ref.get("ref_id") in retiradas:
+                continue
             if self.modo == "backtest" and str(ref.get("ref_id")) not in ofrecidas:
                 continue   # en backtest solo referencias registradas y anteriores a as_of
             piezas.append({"afirmacion": ref.get("afirmacion") or datos.get("sintesis", "")[:200], "fuente": ref["ref_id"],
                            "direccion": ref.get("direccion", "neutra"), "extracto": (ref.get("extracto") or ref.get("motivo") or "")[:160],
-                           "origen": agente, "incidencia": bool(hall), **_bloque_pronostico_fuente(ref)})
-        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall,
+                           "origen": agente, "incidencia": ref["ref_id"] in contaminadas or any(
+                               h["origen"].startswith(f"{agente}:{run_id}.referencias[{indice}].") for h in hall), **_bloque_pronostico_fuente(ref)})
+        for pieza in piezas:
+            if pieza["incidencia"]:
+                pieza.update(afirmacion="Pieza en cuarentena", extracto="", direccion="neutra")
+                pieza.pop("pronostico_fuente", None)
+        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall + cand.get("hallazgos_r9", []),
                 "estado": "COMPLETO" if piezas else "SIN_RESULTADO"}
 
     def _prospectiva(self, clase, finales, as_of, run_id, presupuesto, hz_interes) -> None:
@@ -1399,6 +1438,14 @@ class Bloque:
     # Evidencia (F2), clústeres y selección
     # ====================================================================================
     def _registrar_evidencia_clase(self, an: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
+        self.monitor.encolar("AG-12")
+        t0 = self.monitor.inicio("AG-12")
+        try:
+            self._curar_lote(an, as_of, run_id, presupuesto)
+        finally:
+            self.monitor.fin("AG-12", t0)
+
+    def _curar_lote(self, an, as_of, run_id, presupuesto):
         clase = an["clase"]
         self._registrar_r9(an.get("hallazgos_r9", []), run_id)
         for p in an.get("peticiones", []):
@@ -1422,17 +1469,27 @@ class Bloque:
                                   as_of, run_id, clase, "investigacion", presupuesto)   # T-113 (H-14 de T-107): con su bolsa
                 if r and r.datos:
                     clasif = {x["indice"]: x for x in r.datos.get("piezas", [])}
+        with self.almacen._transaccion():
+            self._guardar_lote_evidencia(finales, clasif, clase, as_of, run_id)
+
+    def _guardar_lote_evidencia(self, finales, clasif, clase, as_of, run_id):
+        umbral = umbral_similitud(self.cfg)
         i = 0
         clm_por_texto = {normalizar(c.get("afirmacion", "")): c for c in self.almacen.estado("F2", as_of, clave="clm_id").values()
                          if c.get("tipo_entrada") == "CLM"}
         evd_por_hash = {e.get("hash_contenido"): e for e in self.almacen.estado("F2", as_of, clave="evd_id").values()
                         if e.get("tipo_entrada") == "EVD"}
+        por_id = {e["evd_id"]: e for e in evd_por_hash.values()}
         for f in finales:
+            f["_evidencias_ps1"] = []
             f["_evidencias"], f["_raices"], f["_manipulacion"] = [], {}, False
             for p in f["_piezas"]:
                 cl = clasif.get(i, {})
                 i += 1
                 fuente = p["fuente"]
+                if any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]
+                       for filas in self.referencias.bajas.values() for rid, dia in filas):
+                    continue
                 ref = self.referencias.por_id(fuente) if fuente.startswith("REF-") else None
                 if p.get("_sin_contraste"):
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente
@@ -1442,6 +1499,7 @@ class Bloque:
                     nivel_f, tipo_f, raiz = ref["nivel"] or "C", "PRIMARIA" if "primaria" in (ref.get("tipologia") or "").lower() else "SECUNDARIA", fuente
                 else:
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente   # «C provisional»
+                original = (ref or {}).get("fuente_original")
                 h = clave_hash(normalizar(p.get("extracto", "")), fuente, p["afirmacion"], p["direccion"],
                                nivel_f, tipo_f, str(as_of.date()) if fuente.startswith(("HT-01:", "CALC-")) else None)[:32]
                 clave_clm = normalizar(p["afirmacion"])
@@ -1451,7 +1509,7 @@ class Bloque:
                                                                        p, as_of, run_id)
                     clm = {"tipo_entrada": "CLM", "clm_id": self.almacen.nuevo_id("CLM"), "afirmacion": p["afirmacion"],
                            "tipo_afirmacion": tipo_afirmacion, "clase": clase,
-                           "evidencias": [], "raices_independientes": 0, "ps1_cumple": False,
+                           "evidencias": [], "evidencias_ps1": [], "raices_independientes": 0, "ps1_cumple": False,
                            "nivel_confianza": cl.get("nivel_confianza", "probable"),
                            "utilizada_por": [{"objeto": f["proxy"], "papel": "tesis"}], "historial": [{"fecha": str(as_of.date()), "cambio": "alta", "run_id": run_id}]}
                     if clm["tipo_afirmacion"] == "PRONOSTICO_FUENTE" and isinstance(p.get("pronostico_fuente"), dict):
@@ -1461,7 +1519,8 @@ class Bloque:
                 if dup is None:
                     evd = {"tipo_entrada": "EVD", "evd_id": self.almacen.nuevo_id("EVD"), "clm_ids": [clm["clm_id"]],
                            "direccion": p["direccion"].upper(), "ref_id": fuente, "nivel_fuente": nivel_f, "tipo_fuente": tipo_f,
-                           "grado_independencia": "RAIZ", "raiz_evd_id": None, "url_canonica": None, "identificador_documental": fuente,
+                           "grado_independencia": "DERIVADA" if original else "RAIZ", "raiz_evd_id": None,
+                           "origen_documental": original or raiz, "url_canonica": None, "identificador_documental": fuente,
                            "extracto": p.get("extracto", "")[:200], "hash_contenido": h, "estado_verificacion": "VERIFICADA" if nivel_f == "A" else "PENDIENTE",
                            "limitaciones": "dato de mercado HT-01" if fuente.startswith(("HT-01", "CALC")) else "fuente registrada; extracto mínimo",
                            "fecha_publicacion": None, "fecha_dato": (f.get("senales") or {}).get("fecha_dato")
@@ -1474,30 +1533,50 @@ class Bloque:
                         f["_manipulacion"] = True
                     self.almacen.escribir("F2", "AG-12", evd)
                     evd_por_hash[h] = evd
+                    por_id[evd["evd_id"]] = evd
                 else:
                     evd = dup
+                if p.get("incidencia") or evd.get("incidencia_manipulacion"):
+                    from .mantenimiento_fuentes import retirar_por_manipulacion
+                    f["_manipulacion"] = True
+                    evd["incidencia_manipulacion"] = {"tipo": "INSTRUCCION_INCRUSTADA", "detalle": "pieza en cuarentena"}
+                    self.almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": evd["evd_id"],
+                                          "incidencia_manipulacion": evd["incidencia_manipulacion"], "estado_verificacion": "CUARENTENA"})
+                    evd["estado_verificacion"] = "CUARENTENA"
+                    retirar_por_manipulacion(self, fuente, as_of, run_id)
+                    continue
+                if evd.get("estado_verificacion") == "FUENTE_RETIRADA" or fuente in self.referencias.retiradas_f9(as_of):
+                    continue
                 if evd["evd_id"] not in clm["evidencias"]:
                     clm["evidencias"].append(evd["evd_id"])
                 # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
                 # ejecutor es contexto y su «dirección» no depende de la tesis, así que no cuenta como raíz.
-                if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
-                    f["_raices"][evd.get("_raiz", fuente)] = (evd["nivel_fuente"], evd["tipo_fuente"])
+                if evd.get("grado_independencia") == "RAIZ" and not original and evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
+                    ids_ps1 = clm.setdefault("evidencias_ps1", [])
+                    if evd["evd_id"] not in ids_ps1:
+                        ids_ps1.append(evd["evd_id"])
+                    f["_evidencias_ps1"].append(evd["evd_id"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
-            raices = f["_raices"]
-            f["_ps1"] = self._ps1(raices)
-            for cid in f["_evidencias"]:
-                clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
-                clm["raices_independientes"] = len(raices)
-                clm["ps1_cumple"] = f["_ps1"]
-        escritos = set()
-        for f in finales:
-            for cid in f["_evidencias"]:
-                if cid in escritos:
-                    continue
-                clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
+
+        clms = {c["clm_id"]: c for c in clm_por_texto.values()}
+        enlazar_documentos(clms, por_id, self.referencias, self.almacen, umbral)
+        emitidas = {cid for f in finales for cid in f["_evidencias"]}
+        for cid, clm in clms.items():
+            if "evidencias_ps1" not in clm:
+                continue
+            propias = sint.raices_de_clm(clm, por_id)
+            cuenta, ps1 = len(propias), self._ps1(propias)
+            if cid in emitidas or (clm.get("raices_independientes"), clm.get("ps1_cumple")) != (cuenta, ps1):
+                clm.update(raices_independientes=cuenta, ps1_cumple=ps1)
                 self.almacen.escribir("F2", "AG-12", {k: v for k, v in clm.items() if not k.startswith("_")})
-                escritos.add(cid)
+        for f in finales:
+            respaldos = {}
+            for cid in f["_evidencias"]:
+                respaldos.update(sint.evidencias_raiz(clms[cid], por_id))
+            f["_evidencias_ps1"] = list(respaldos)
+            f["_raices"] = sint.raices_de_evidencias(respaldos.values())
+            f["_ps1"] = self._ps1(f["_raices"])
 
     def _tipo_con_pronostico_fuente(self, tipo: str, p: dict, as_of, run_id: str) -> str:
         """T-125 r02 (QA r01, H-01, H-03 y H-04): una pieza que trae un bloque `pronostico_fuente` registrable (completo, de
@@ -1520,8 +1599,7 @@ class Bloque:
     def _ps1(self, raices: dict) -> bool:
         """PS1 (Anexo A, P-14): al menos `ps1.raices_min` raíces independientes de nivel A o B, o una fuente primaria de nivel
         A. `raices`: {raíz: (nivel, tipo de fuente)}."""
-        return sum(1 for n, _ in raices.values() if n in ("A", "B")) >= int(parametro(self.cfg, "ps1.raices_min")) \
-            or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())
+        return cumple_ps1(raices, self.cfg)
 
     def _clusteres(self, analisis: dict, as_of, run_id: str) -> dict:
         proxies = sorted({f["proxy"] for an in analisis.values() for f in an["finalistas"] if f.get("_gc3")}
@@ -1697,7 +1775,8 @@ class Bloque:
             ps = ht03.fusionar_parametros({"pesos_rk": aju["a"]})
             ev_s = [ht03.evaluar_opcion(e, ps) for e in entradas_ht03]
             sel_s = ht03.seleccionar_top3(ev_s, ps, max(n_cand, len(ev_s)))
-            sombra = {"aju_id": aju["id"], "top3_sombra": [t["opp_id"] for t in sel_s["top3"]],
+            sombra = {"aju_id": aju["id"], "rk_pareado": {x["opp_id"]: [x["puntuaciones"]["RK"], y["puntuaciones"]["RK"]]
+                                                          for x, y in zip(evaluadas, ev_s)}, "top3_sombra": [t["opp_id"] for t in sel_s["top3"]],
                       "cambios": len({t["opp_id"] for t in sel_s["top3"]} ^ {t["opp_id"] for t in sel["top3"]})}
         for f, e in zip(candidatos, evaluadas):
             f["_ht03"] = e
@@ -1783,6 +1862,7 @@ class Bloque:
         f.setdefault("invertibilidad", {"universo_suficiente": True, "nota": "Registro anterior a V5.0: invertibilidad no declarada"})
         f.update({"clase": v["clase"], "tipo_activo": v["clase"], "proxy": sym, "opp_id": v["opp_id"], "_previa": v, "_vigente": True, "_arrastre": True,
                   "senales": sen, "_ps1": v.get("ps1", True), "_evidencias": v.get("evidencias", []),
+                  "_evidencias_ps1": list(v.get("evidencias_ps1", [])),
                   "_objeciones": v.get("objeciones_internas", []), "_refutacion": {"arrastre": True},
                   "_tipo_pronostico": v.get("tipo_pronostico", "RELATIVO"), "_referencia": v.get("referencia_indice"),
                   "tnd_id": v.get("tnd_id"), "afirmaciones": [], "_gc3": True})
@@ -1878,7 +1958,7 @@ class Bloque:
         intento = 0
         while True:
             intento += 1
-            res = sint.ht09_validar(self, paquete, extras, None)
+            res = sint.control_con_respaldo(self, paquete, extras, None, run_id)
             dictamen = res["dictamen"]
             advert = [c for c in res["comprobaciones"] if c["resultado"] == "ADVERTENCIA"
                       and not (c["id"] == "C12" and all("no se ha facilitado" in i["detalle"] for i in c["incidencias"]))]
@@ -1888,6 +1968,11 @@ class Bloque:
                    "fase": "F6", "dictamen_ht09": dictamen, "dictamen_efectivo": efectivo,
                    "comprobaciones": [{"id": c["id"], "resultado": c["resultado"], "n_incidencias": len(c["incidencias"]),
                                        "detalle": [i["detalle"] for i in c["incidencias"]][:5]} for c in res["comprobaciones"]]}
+            if res.get("modo") == "G3_MANUAL":
+                g3v.update(tipo_control="G3_MANUAL", dictamen_ht09="NO_DISPONIBLE")
+                self.almacen.escribir("HA", "AG-18", g3v)
+                paquete.setdefault("limitaciones", []).append(res["motivo"])
+                return paquete, {"dictamen": "BLOQUEADO", "bloqueos": ["G3-MANUAL"], "g3v_id": g3v["id"], "modo": "G3_MANUAL"}
             if efectivo == "APTO":
                 self.almacen.escribir("HA", "AG-18", g3v)
                 return paquete, {"dictamen": "APTO", "advertencias": [], "intentos": intento, "g3v_id": g3v["id"]}
@@ -1991,7 +2076,7 @@ class Bloque:
                      "objeciones_internas": f.get("_objeciones", []), "veredicto_refutacion": f.get("_veredicto"),
                      "veredicto_contradictor": f.get("_veredicto_contradictor"),
                      "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
-                     "ps1": f.get("_ps1"), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
+                     "ps1": f.get("_ps1"), "evidencias_ps1": f.get("_evidencias_ps1", (f.get("_previa") or {}).get("evidencias_ps1", [])), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
                      "referencia_indice": f.get("_referencia"), "horizontes_prg": prg_por_opp.get(f["opp_id"], {}),
                      "naturaleza_inversion": f.get("_naturaleza"), "horizonte_principal": f.get("_hp"),
                      "estado": estado, "de": (previa or {}).get("estado"), "rango_top3": (sel_ids.get(f["opp_id"]) or {}).get("rango"),
@@ -2125,6 +2210,7 @@ class Bloque:
             "apuestas_independientes": paquete.get("apuestas_independientes"), "prg_congelados": prg, "entregables": entreg,
             "g3": resultado.get("g3_entregables") or resultado.get("g3"), "estado": resultado["estado"],
             "entrega": resultado.get("entrega", "ENTREGADA"), "limitaciones": paquete.get("limitaciones", []),
+            "cribado_n1": {c: a["cribado_n1"] for c, a in analisis.items() if "cribado_n1" in a},
             "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")},
             "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")},
             # T-158: guías CT-18 aplicadas por agente («el agente registra la guia_id aplicada», 6.9); solo si hubo alguna
@@ -2349,6 +2435,10 @@ class Bloque:
         ejecucion = None
         sin_cambio: list[str] = []   # T-197 r02 (H-01): un P-01 igual al vigente no escribe CFG- (no mueve la quincena)
         efecto = (as_of + pd.Timedelta(days=1)).date()
+        programados = {e["param_id"]: e["valor_vigente"] for e in self.almacen.leer("F10", as_of)
+                       if e.get("tipo_entrada") == "CFG" and e.get("fecha_efecto") == str(efecto)}
+        vigentes = {"P-01": calendario, "P-02": perfiles_activos(self.cfg), "P-03": list(HORIZONTES),
+                    "P-29": self.cfg.get("idioma", "es-ES"), **f10, **programados}
         for k, v in conf.items():
             if k not in mapa:
                 rechazos.append({"parametro": k, "motivo": "no es un parámetro de servicio (régimen CALIBRABLE u OPERADOR)"})
@@ -2374,18 +2464,24 @@ class Bloque:
                     rechazos.append({"parametro": k, "motivo": f"clases desconocidas {malas}"})
                     continue
             if k == "horizontes":
+                if not isinstance(v, list) or not v:
+                    rechazos.append({"parametro": k, "motivo": "se necesita una lista de horizontes"})
+                    continue
                 no = [h for h in v if h not in HORIZONTES]
                 if no:
                     rechazos.append({"parametro": k, "motivo": f"horizontes desconocidos {no}"})
                     continue
                 activas = conf.get("clases_activas") or f10.get("P-02") or list(CLASES)
+                if len(set(v)) != len(v):
+                    rechazos.append({"parametro": k, "motivo": "horizontes repetidos"})
+                    continue
                 for h in v:
                     for c in activas:
                         if aplicabilidad(self.cfg, c, h) == "NO":
                             rechazos.append({"parametro": f"horizontes:{c}:{h}", "motivo": f"{h} es «No» para {c} en la tabla 8.3 (no se activa para esa clase)"})
             pid = mapa[k]
             valor = v if pid != "P-01" else ht05.componer_p01(periodicidad, ejecucion, horario)
-            if pid in aplicado:
+            if pid in aplicado or (pid != "P-01" and valor == vigentes.get(pid)):
                 continue
             extra: dict[str, Any] = {}
             if pid == "P-01":

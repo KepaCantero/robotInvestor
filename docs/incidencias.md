@@ -1046,3 +1046,51 @@ Detalle en `.docs/tickets/T-206/`.
 - **Versiones.** La publicación más reciente de la serie de cada librería fijada (PyYAML 6.0.3, jsonschema 4.26.0 y scipy 1.18.1). Al subir una de ellas hay que subir su stub y volver a medir.
 - **El gate exige el entorno fijado (r02, QA r01 H-03).** `tools/check_all.sh` ejecuta `.docs/scripts/preparar_entorno.sh --comprobar` antes de mypy. Si falla, porque falta un stub o cualquier versión fijada o porque hay un paquete sin fijar, muestra su salida y cada gate de mypy sale ✗ con «el .venv no coincide con tools/requisitos_entorno.txt (stubs incluidos): ejecuta .docs/scripts/preparar_entorno.sh». mypy no se ejecuta y el total de gates no cambia. Sin los stubs, mypy contaba menos y el gate pasaba en verde un código que, con ellos, lo pone en rojo. Se comprueba el fichero entero, y no solo los stubs, porque las cuotas dependen también de otras versiones (T-96: arch 9.0.0). Variante más estrecha, si el operador la prefiere: comprobar solo los `types-*` y `*-stubs` fijados.
 Detalle en `.docs/tickets/T-202/`.
+
+### INC-T-181-01 [PROPUESTO] · Revisión de una huella concreta
+
+Documento 0 §13.3–13.6 atribuye al custodio la revisión de contenido y la recalificación. Se propone recibir su decisión como JSON ligado a la huella del barrido. Así se puede probar con el cliente simulado y se evita aplicar una decisión a otra versión de la página. Para oportunidades antiguas sin detalle de las evidencias que contaron en PS1, la retirada de una fuente se registra como necesidad de reevaluación. El informe de bajas mensual se emite en el primer ciclo posterior al cierre del mes.
+
+### INC-T182-01 [PROPUESTO] · Confirmación de la fuente antes de una baja
+
+La pieza sospechosa se conserva en cuarentena y no cuenta en PS1. Una atribución del modelo con un título de catálogo limpio requiere verificación de la página por el custodio antes de retirar la fuente (alternativa de H-03). Si el título confirma la manipulación, la baja se registra por fecha en `<estado>/F9_bajas.md`. El catálogo congelado conserva la ficha. La búsqueda y el Evaluador aplican la baja desde su fecha. Así cada backtest tiene su propio registro. El custodio puede consolidar la baja en la copia operativa de F9 mediante HT-02 y su registro de bajas.
+
+### INC-T183-01 [PROPUESTO] · Reproducciones sin atribución
+
+«Fuente original» es un metadato opcional de la copia operativa. Las cadenas de atribución se resuelven contra las EVD de F2. Una derivada sin original identificado documenta su limitación. PS1 de una afirmación se calcula sobre sus propias raíces y PS1 de la opción sobre la unión de las afirmaciones citadas. Cuando falta la traza en registros históricos, G3 deja advertencia. Una CLM ausente o una puerta sin respaldo bloquean el paquete.
+
+### INC-T183-02 [PROPUESTO] · Similitud de las piezas documentales
+
+En una misma afirmación, el ejecutor compara los conjuntos de tríos de palabras normalizadas de extractos de referencias, con coeficiente de Jaccard mínimo 0,80 configurable. Conserva la raíz por fecha de disponibilidad y luego por identificador. Dos textos sin tríos suficientes solo se relacionan si tienen atribución documental. La revisión del Auditor con el modelo real requiere API.
+
+### INC-T184-01 [PROPUESTO] · Prioridad de fichas antiguas sin fecha
+
+La entrada exige fecha de publicación para las altas nuevas. Las fichas antiguas sin fecha quedan detrás de las fechadas a igual calidad. Usar la configuración de la instancia para indicar el directorio operativo.
+
+**INC-T185-01 · 21-11-2026 · Reparto del presupuesto de exploración de N1 (Bloque A, T-185, PB-13).** [PROPUESTO] Se registra en F5 y en el CT-06 el reparto planificado de la bolsa de cribado de N1 (`presupuesto_uc.reparto_fases.cribado` × N1) entre vigentes y rotación (`presupuesto_uc.rotacion_exploratoria`). El proveedor factura el CT-06 entero y su coste por símbolo no se puede desglosar. Las celdas siguen en `seleccion.rotacion_exploratoria_celdas`. Detalle en `.docs/tickets/T-185`.
+
+### INC-T188-01 [PROPUESTO] · Muestra para comparar decisiones del Broker
+
+La comparación es descriptiva. El umbral por grupo reutiliza evaluacion.min_calibrar [PROPUESTO]. Las decisiones se distribuyen a AG-17 y AG-02, y las consultas recurrentes a AG-01 y AG-17. F6 identifica el método que generó cada lección. Detalle en `.docs/tickets/T-188`.
+
+### INC-T189-01 [PROPUESTO] · Estimación del progreso al pedir más presupuesto
+
+[PROPUESTO] EV pondera las fases servidas anteriores con `presupuesto_uc.reparto_fases`. El CPI y el EAC se registran en cada AUT de HA. La regla (c) de 1,5 × BAC carece de parámetro en el Anexo A: hasta que el operador decida su umbral y lo incorpore, el EAC se informa y la decisión usa el valor de la fase y el tope de ampliación. El campo adicional `tipos_dato` de las incidencias de seguridad contiene únicamente etiquetas: IBAN, TARJETA, IDENTIFICACION_PERSONAL, CORREO, CLAVE_API, CREDENCIAL o DATO_PROTEGIDO. Detalle en `.docs/tickets/T-189`.
+
+### INC-T191-01 [PROPUESTO] · Bloqueo ante la caída del verificador
+
+El Orquestador retiene la entrega cuando HT-09 no puede ejecutarse. El historial y F5 conservan el motivo y la fase. La CT-14 transporta el paquete del ciclo con el detalle de indisponibilidad en `paquete_sintesis.resultado_ht09`. La comprobación manual de los controles B queda pendiente. Los fallos de control, de integridad y de programación interrumpen el ciclo.
+
+### INC-T192-01 [PROPUESTO] · Evaluación del ajuste antes de aplicarlo
+
+El mínimo del Anexo A se cuenta en pronósticos pareados resueltos. Cada correlación compara dos ordenaciones dentro de la misma clase, horizonte y RUN entregado. La DM-HLN usa la media por fecha y necesita al menos tres fechas con correlaciones definidas. El umbral propio `evaluacion.recalibracion_rk.p_reversion` corresponde al §8 del Evaluador. La única métrica de rendimiento comparada es la capacidad ordenadora (IC). Un IC inferior también implica reversión. El número de cambios top-3 describe las decisiones y queda en `resultado_sombra`. PA-10 reserva la aplicación a producción al operador.
+
+Para una tasa base contaminada, F6 conserva una entrada propuesta `CORRECCION_FUGA` con identificador COR, PRG afectado, corte de emisión, referencia RI-TB limpia con su CALC, comprobación SUPERADA y puntuaciones corregidas. F4 conserva el original FALLIDA. HA conserva la incidencia por cada PRG y una corrección COR comunicada a AG-18. Ante datos históricos insuficientes, la referencia sigue excluida y C5 vuelve a intentarlo.
+
+### INC-T193-01 [PROPUESTO] · Objetivo temporal para la ingesta
+
+Mientras el operador fija el objetivo de AG-12 en segundos, el valor nulo desactiva el disparo temporal. Los demás agentes sin estado escalan por cola. P-20 y el Anexo A dan el factor de tiempo; las utilizaciones y las lecturas de cierre proceden del Orquestador §6.10. Cuando falta una tasa observada, la apertura por cola añade una sola instancia hasta el máximo. Durante la ampliación, cada ventana con ingestas informa en HA del tiempo observado y de si ha vuelto al objetivo. La cifra efectiva con carga real queda pendiente del operador. Las órdenes del monitor describen la capacidad solicitada.
+
+### INC-T-181-03 [PROPUESTO] · Calificación de referencias
+
+La configuración transcribe las siete rúbricas de puntuación por catálogo y los niveles de calidad del §13.3. Altas y revisiones consultan los mismos límites de la instancia.

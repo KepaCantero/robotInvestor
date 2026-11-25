@@ -412,7 +412,14 @@ ps2_festivos: {viernes_santo: true, lunes_de_pascua: false, fijos: ['01-01', '12
 # indicador, con SUBYACENTE) no se analiza en ese ciclo, declarado. El Anexo A solo fija la antigüedad de PS2 por horizonte;
 # 7 días es la de H3 y la misma tolerancia que ya usaba la resolución. Pregunta (T-57): «¿Con cuántos días de retraso
 # deja de valer el índice con el que se compara una oportunidad?»
-referencias: {antiguedad_maxima_dias: 7}
+referencias:
+  antiguedad_maxima_dias: 7
+  # Documento 0 §13.3, en orden de criterio de la rúbrica de cada catálogo
+  rubricas:
+    F7: [25, 20, 15, 10, 10, 10, 10]
+    F8: [25, 20, 15, 10, 10, 10, 10]
+    F9: [20, 20, 15, 15, 10, 10, 10]
+  niveles_q: {A: 80, B: 65, C: 50}
 
 # T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana. T-65 (CS-18): la
 # ventana es la del Catálogo (≥ 3 años semanales) y fija también el inicio de los datos. El prompt del Analizador dice
@@ -470,7 +477,7 @@ evaluacion:
   # Recalibración de los pesos de RK (Anexo A, P-11): paso por propuesta y bandas ±0,05 por trimestre y ±0,15 en total
   # (T-65, CS-10 de T-53). `dif_ic_min`: diferencia mínima de capacidad ordenadora (IC de Spearman) entre A y E para
   # proponer un ajuste, y `meses_sombra`: duración de la sombra; ninguno figura en el Anexo A ([PROPUESTO], técnico)
-  recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3}
+  recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3, p_reversion: 0.10} # p de reversión: Evaluador V5.0 §8.
   # T-176 (PB-36) · Bandas de los parámetros CALIBRABLES de F10 que el Evaluador puede proponer ajustar (`proponer_ajuste`).
   # P-09, umbrales de elegibilidad: Anexo A, «±5/trimestre; ±10 total» (cada umbral; esquema F10 4.3). P-05, candidatas
   # máximas tras cribado: el Documento 0 no le da banda (esquema F10 4.3: PENDIENTE_OPERADOR); mientras el operador no la
@@ -522,6 +529,11 @@ bandas_verbales:
 # Paralelismo de agentes sin estado (R25)
 paralelismo:
   hilos_analistas: 4
+  factor_tiempo: 2    # Anexo A, R25, P-20 de F10
+  rho_objetivo: 0.75  # Orquestador V5.0 §6.10
+  rho_cierre: 0.30    # Orquestador V5.0 §6.10
+  lecturas_cierre: 2  # Orquestador V5.0 §6.10
+  objetivo_ingesta_s: null  # INC-T193-01: objetivo temporal a fijar por instancia; la cola sigue operativa
   umbral_cola: 3
 
 # T-196 (PB-08, R5): cola de peticiones del Coordinador (`bloque_a/cola_peticiones.py`). El presupuesto de cada petición sale
@@ -588,3 +600,7 @@ cadena_b:
   # Lo que el Bloque A no da y la petición lleva: los valores neutros del Anexo B.1 del Documento 0 del Bloque B
   # (nivel AUTO: lo propone el Bloque B; marco de invertibilidad por defecto, R4 y 2.7)
   peticion: {nivel: AUTO, prioridad: NORMAL, perfil_invertibilidad: MINORISTA_UE_DEFECTO}
+
+# INC-T183-02 [PROPUESTO], Jaccard de tríos de palabras en extractos de una misma afirmación.
+evidencia:
+  umbral_similitud_derivada: 0.80

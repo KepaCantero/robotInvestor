@@ -24,19 +24,20 @@ def _huellas(carpeta):
 # ---------------------------------------------------------------- PB-10 · qué cambia en F10 y HA sin incidencia de escritura
 def test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas(tmp_path, universo):
     """El plan pide H1 «para ALT»; el CT-04 del ejecutor solo tiene una lista global de horizontes. La celda ALT×H1 se rechaza
-    y sigue sin aplicarse, pero la lista se guarda en F10 junto con P-02 (INC-T116-01): no cambia ningún otro parámetro."""
+    y la lista global se conserva; solo cambia P-02 (T-189)."""
     b = nuevo_bloque(tmp_path, universo)
     b.fijar_fecha(AS_OF)
     antes = b.f10("2026-12-31")
     activas = [c for c in antes["P-02"] if c != "CRI"] if "CRI" in antes["P-02"] else [*antes["P-02"], "CRI"]
     assert "ALT" in activas and aplicabilidad(b.cfg, "ALT", "H1") == "NO"
-    d = b.decision({"configuracion": {"clases_activas": activas, "horizontes": ["H1", "H3"], "umbral_E": 50}}, AS_OF)
+    d = b.decision({"configuracion": {"clases_activas": activas, "horizontes": antes["P-03"], "umbral_E": 50}}, AS_OF)
     assert d["estado"] == "APLICADA_PARCIALMENTE"
     rechazos = {x["parametro"]: x["motivo"] for x in d["rechazos"]}
     assert "CALIBRABLE" in rechazos["umbral_E"] and "«No» para ALT" in rechazos["horizontes:ALT:H1"]
     despues = b.f10("2026-12-31")
     cambiados = {k for k in set(antes) | set(despues) if antes.get(k) != despues.get(k)}
-    assert cambiados == {"P-02", "P-03"} and despues["P-02"] == activas and despues["P-03"] == ["H1", "H3"]
+    assert not [x for x in b.almacen.leer("F10") if x.get("tipo_entrada") == "CFG" and x["param_id"] == "P-03"]
+    assert cambiados == {"P-02"} and despues["P-02"] == activas and despues["P-03"] == antes["P-03"]
     assert aplicabilidad(b.cfg, "ALT", "H1") == "NO"                                  # la celda rechazada sigue sin aplicarse
     assert not [e for e in b.almacen.leer("HA") if e.get("tipo") in ("ACCESO_FUERA_DE_MATRIZ", "CANAL_NO_PREVISTO")]
     assert all(b.almacen.verificar_integridad().values())

@@ -32,7 +32,13 @@ from scipy import stats
 
 from .almacen import PARAMETROS_CALIBRABLES
 from .calendario import _sesiones_entre, validar_festivos_ps2
-from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
+from .configuracion import (
+    CLASES,
+    TABLA_HORIZONTES,
+    parametro,
+    parametros_ht03,
+    sesiones_horizonte,
+)
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
@@ -345,13 +351,17 @@ def _numero_finito(x) -> bool:
     return not isinstance(x, bool) and isinstance(x, (int, float)) and _finito(x)
 
 
-def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
+def fuente_de_opinion_registrada(ref_id, referencias, as_of=None) -> bool:
     """T-125 r02 (QA r01, H-04): el `ref_id` de un pronóstico de fuente es una fuente registrada en F9 (Registro de Fuentes,
     `REF-RF-…`). Sin registro de referencias no se acepta ninguna (falla cerrado)."""
     if referencias is None or not isinstance(ref_id, str) or not ref_id.startswith("REF-"):
         return False
-    ficha = referencias.por_id(ref_id)
-    return bool(ficha) and ficha.get("archivo") == "F9"
+    from .referencias import Referencias
+    if as_of is not None and isinstance(referencias, Referencias):
+        ficha = referencias.por_id(ref_id, as_of)
+    else:
+        ficha = referencias.por_id(ref_id)
+    return bool(ficha) and ficha.get("archivo") == "F9" and ficha.get("estado_enlace") != "RETIRADA"
 
 
 def variables_nivel(cfg: dict | None) -> list[str]:
@@ -399,7 +409,7 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
         return "umbral_o_rango no válido para la dirección"
     if prob is not None and not (_prob_valida(prob) and 0.0 < float(prob) < 1.0):
         return "probabilidad fuera de (0, 1)"
-    if not fuente_de_opinion_registrada(ref_id, referencias):
+    if not fuente_de_opinion_registrada(ref_id, referencias, registro):
         return f"«{ref_id}» no es una fuente registrada en F9"
     if fuente is not None and ref_id != fuente:
         return f"el ref_id «{ref_id}» no es la fuente de la pieza («{fuente}»)"
@@ -411,6 +421,10 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
     if not reg < objetivo:
         return "la fecha objetivo no es posterior al registro (resultado ya conocible)"
     return None
+
+
+class ComparacionSombraNoDisponible(RuntimeError):
+    """Se aplaza la decisión del AJU; C5 aún puede publicar otras novedades."""
 
 
 class Evaluador:
@@ -649,6 +663,7 @@ class Evaluador:
         pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of and p.get("prob_interna") is not None]
         resueltos: list[dict] = []
         filas: list[tuple[dict, dict | None]] = []
+        rc_tasas = self.almacen.estado("RC", as_of) if pendientes else {}
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
             f0, f1 = pd.Timestamp(p["fecha_emision"]), pd.Timestamp(p["fecha_resolucion"])
             try:
@@ -696,12 +711,15 @@ class Evaluador:
             f_base = pd.Timestamp(nr["fecha"]) if isinstance(nr, dict) and nr.get("fecha") else f0
             fuga_ok = (f_base <= f0 and d1 <= as_of and f1 <= as_of)
             fuga_ok = fuga_ok and (d1b is None or d1b <= as_of)
-            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
+            soporte = rc_tasas.get((p.get("referencia_ingenua") or {}).get("calc_id"), {})
+            fechas_base = [str(soporte.get("as_of") or "")[:10], *(str(d.get("fecha_dato") or "")[:10] for d in soporte.get("datos") or [] if isinstance(d, dict))]
+            fuga_base = max(fechas_base) > str(f0.date())
+            filas.append((p, {"fuga_base": fuga_base and fuga_ok, "rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
                               "fecha_dato": max(d1, d1b) if d1b is not None else d1, "fecha_dato_proxy": d1,
-                              "fecha_dato_referencia": d1b, "fuga": "SUPERADA" if fuga_ok else "FALLIDA"}))
+                              "fecha_dato_referencia": d1b, "fuga": "SUPERADA" if fuga_ok and not fuga_base else "FALLIDA"}))
         if not filas:
             return []
-        validas = [(p, r) for p, r in filas if r is not None]
+        validas = [(p, r) for p, r in filas if r is not None and r["fuga"] == "SUPERADA"]
         calc_id = None
         if validas:
             res = self.motor.servir({"operacion": "FC-EVAL-001", "plan": "PLAN_MIN", "datos": [{"valores": {
@@ -734,8 +752,10 @@ class Evaluador:
                                     "puntuaciones": {"brier": (pi - o) ** 2, "log": -math.log(min(max(pi if o else 1 - pi, 0.01), 0.99)),
                                                      "brier_ref": (pr - o) ** 2,
                                                      "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))},
-                                    "calc_id": calc_id, "comprobacion_fuga": r["fuga"]}}
+                                    "calc_id": calc_id if r["fuga"] == "SUPERADA" else None, "fuga_tasa_base": r["fuga_base"], "comprobacion_fuga": r["fuga"]}}
             self.almacen.escribir("F4", "AG-20", e)
+            if (e.get("resolucion") or {}).get("fuga_tasa_base"):
+                self._avisar_fuga(p["prg_id"])
             resueltos.append({**p, **e})
         self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "RES", "id": f"RES-{as_of.date()}-{self.almacen.nuevo_id('RESL')[-4:]}",
                                               "fecha": str(as_of.date()),
@@ -753,9 +773,23 @@ class Evaluador:
         independientes de la celda en la que se registran (8.3, 12.1); se evalúan aparte, por tipo × H5, en `estado_h5`.
         Así no cuentan en métricas, certificados, historial publicado ni recalibración.
         `admisibles` (PA-09): excluye los PRG con `contaminacion_posible`; False los devuelve todos."""
-        out = [p for p in self.almacen.estado("F4", as_of).values()
-               if p.get("estado") == "RESUELTO" and not p.get("es_hito")
-               and (p.get("resolucion") or {}).get("comprobacion_fuga") == "SUPERADA"]
+        out = []
+        correcciones = None
+        for p in self.almacen.estado("F4", as_of).values():
+            if p.get("estado") != "RESUELTO" or p.get("es_hito"):
+                continue
+            r = p.get("resolucion") or {}
+            if r.get("comprobacion_fuga") != "SUPERADA":
+                if not r.get("fuga_tasa_base"):
+                    continue
+                if correcciones is None:
+                    correcciones = self.almacen.estado("F6", as_of, clave="prg_corregido")
+                correccion = correcciones.get(p["prg_id"])
+                if not correccion:
+                    continue
+                p["referencia_ingenua"] = correccion["referencia_limpia"]
+                p["resolucion"] = {**r, "comprobacion_fuga": "SUPERADA", "puntuaciones": correccion["puntuaciones"]}
+            out.append(p)
         if admisibles:
             out = [p for p in out if not contaminacion_posible(p)]
         return [p for p in out if p.get("en_informe")] if solo_informe else out
@@ -1619,6 +1653,38 @@ class Evaluador:
                     nuevas.append(l)
         return nuevas
 
+    def comparar_decisiones_broker(self, as_of):
+        with self.almacen._transaccion():
+            decisiones = defaultdict(list)
+            for e in self.almacen.leer("F3", as_of):
+                if e.get("tipo_entrada") == "DECISION_BROKER":
+                    decisiones[e["opp_id"]].append(e["decision_broker"])
+            if not decisiones:
+                return None
+            grupos = {"ENVIADA_A_BLOQUE_B": [], "DESCARTADA": []}
+            for p in self.resueltos(as_of, solo_informe=True):
+                if p.get("opp_id") not in decisiones or not all((p.get("fecha_resolucion"), p["resolucion"].get("fecha_dato"), p.get("fecha_emision"))):
+                    continue
+                limite = min(p["fecha_resolucion"], p["resolucion"]["fecha_dato"])
+                dec = next((x for x in reversed(decisiones.get(p.get("opp_id"), []))
+                            if p["fecha_emision"] <= x["fecha"] < limite), {})
+                grupo = dec.get("decision")
+                if grupo in grupos:
+                    grupos[grupo].append(p)
+            if min(len({p["opp_id"] for p in g}) for g in grupos.values()) < parametro(self.cfg, "evaluacion.min_calibrar"):
+                return None
+            resumen = []
+            ids = []
+            for nombre, grupo in grupos.items():
+                total = sum(p["resolucion"]["resultado_binario"] for p in grupo)
+                etiqueta = "enviadas" if nombre == "ENVIADA_A_BLOQUE_B" else "descartadas"
+                resumen.append(f"{etiqueta}: {total}/{len(grupo)} pronósticos con acierto")
+                ids.extend(p["prg_id"] for p in grupo)
+            return self._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-17", "AG-02"],
+                                               "metodo": "comparacion_decisiones_broker"},
+                                       "PRODUCTO", ". ".join(resumen), "Mostrar ambos grupos en la lectura del informe.",
+                                       "recurrente", ids, len(ids))
+
     def leccion_producto(self, as_of, tema: str, qry_ids: list[str]) -> dict | None:
         return self._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-17", "AG-02"]}, "PRODUCTO",
                                    f"La pregunta «{tema}» se ha repetido {len(qry_ids)} veces en 4 semanas.",
@@ -1690,6 +1756,63 @@ class Evaluador:
                                 "aprobación del operador"})
         self.almacen.escribir("F6", "AG-20", aju)
         return aju
+
+    def cerrar_sombra(self, as_of):
+        from .sombra import comparar
+        with self.almacen._transaccion():
+            aju = self.ajuste_en_sombra(as_of)
+            if not aju or not aju.get("sombra_hasta") or str(as_of)[:10] < aju["sombra_hasta"]:
+                return None
+            try:
+                cierre = comparar(self, aju, as_of)
+            except Exception as exc:
+                from .respuesta_final import para_la_consulta
+                if para_la_consulta(self.almacen, exc):
+                    raise
+                raise ComparacionSombraNoDisponible("No se pudo comparar la sombra") from exc
+            return self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "AJU", "id": aju["id"],
+                                         "fecha_cierre": str(as_of)[:10], **cierre})
+
+    def _avisar_fuga(self, prg_id):
+        self.almacen.incidencia("OTRO", "Fuga detectada en la tasa base del pronóstico", prg_id,
+                                severidad="Operativa", tratamiento="resolución FALLIDA; corrección en C5",
+                                fuga_detectada=prg_id, comunicado_a=["AG-18"])
+
+    def _comunicar_correccion(self, correccion):
+        self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "COR", "id": correccion["id"],
+            "entrada_corregida": correccion["prg_id"], "correccion_f6": correccion["id"],
+            "motivo": "Fuga en la tasa base; referencia y puntuaciones recalculadas al corte de emisión",
+            "comunicado_a": ["AG-18"]})
+
+    def corregir_fugas(self, as_of, run_id):
+        with self.almacen._transaccion():
+            previas = self.almacen.estado("F6", as_of, clave="prg_corregido")
+            avisadas = self.almacen.estado("HA", as_of, clave="fuga_detectada")
+            comunicadas = self.almacen.estado("HA", as_of, clave="correccion_f6")
+            for correccion in previas.values():
+                if correccion["id"] not in comunicadas:
+                    self._comunicar_correccion(correccion)
+            for p in self.almacen.estado("F4", as_of).values():
+                r = p.get("resolucion") or {}
+                if r.get("fuga_tasa_base") and p["prg_id"] not in avisadas:
+                    self._avisar_fuga(p["prg_id"])
+                if not r.get("fuga_tasa_base") or p["prg_id"] in previas:
+                    continue
+                try:
+                    limpia = self.tasa_base(p["variable"]["serie_ht01"], p.get("referencia_indice"), p["clase"],
+                                            sesiones_horizonte(self.cfg, p["horizonte"]), p["sentido"] == "POSITIVO",
+                                            p["fecha_emision"], run_id)
+                except DatosNoDisponibles:
+                    self.almacen.incidencia("HERRAMIENTA", "Pendiente la corrección de la fuga por falta de datos históricos",
+                                            p["prg_id"], severidad="Operativa", comunicado_a=["AG-18"])
+                    continue
+                o, pr = r["resultado_binario"], limpia["valor_o_prob"]
+                puntos = {**r["puntuaciones"], "brier_ref": (pr - o) ** 2,
+                          "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))}
+                correccion = self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CORRECCION_FUGA", "id": self.almacen.nuevo_id("COR"),
+                    "prg_id": p["prg_id"], "prg_corregido": p["prg_id"], "original": "FALLIDA", "comprobacion_fuga": "SUPERADA",
+                    "referencia_limpia": limpia, "fecha_corte": p["fecha_emision"], "puntuaciones": puntos})
+                self._comunicar_correccion(correccion)
 
     def ajuste_en_sombra(self, as_of) -> dict | None:
         for a in self.almacen.estado("F6", as_of, clave="id").values():
@@ -1934,7 +2057,7 @@ class Evaluador:
                 continue   # T-125 r03 (QA r02, H-09 y H-12): variable que el cierre no resuelve, o dirección que no es texto
             if not emision <= pd.Timestamp(registro) < objetivo:
                 continue   # H-03: registrado cuando el resultado ya era conocible (o antes de emitirse): no cuenta
-            if not fuente_de_opinion_registrada(ref_id, self.referencias):
+            if not fuente_de_opinion_registrada(ref_id, self.referencias, corte):
                 continue   # H-04: no es una fuente de F9
             if direccion in ("por_encima", "por_debajo"):
                 if not _numero_finito(umbral):
@@ -2043,6 +2166,7 @@ class Evaluador:
     def ciclo(self, as_of, run_id: str | None = None) -> dict:
         """C5: resolución de vencidos, métricas, certificados, lecciones y recalibración (nunca bloquea C1–C3)."""
         resueltos = self.resolver(as_of, run_id)
+        self.corregir_fugas(as_of, run_id)
         metr = self.metricas(as_of)
         excl = self.excluidos_contaminacion(as_of)
         if metr or excl["total"]:
@@ -2052,7 +2176,17 @@ class Evaluador:
                                                   "comprobacion_fuga": "SUPERADA", "madurez": "implementado"})
         certs = self.revisar_certificados(as_of, run_id)
         lecciones = self.extraer_lecciones(as_of, metr)
-        aju = self.recalibrar(as_of, run_id)
+        comparacion = self.comparar_decisiones_broker(as_of)
+        if comparacion:
+            lecciones.append(comparacion)
+        try:
+            cierre_sombra = self.cerrar_sombra(as_of)
+        except ComparacionSombraNoDisponible:
+            self.almacen.incidencia("HERRAMIENTA", "No se pudo evaluar el cierre de sombra en este ciclo", "AG-20",
+                                    severidad="Operativa")
+            aju = None
+        else:
+            aju = cierre_sombra or self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
             degradacion_dm = self.aplicar_degradacion_dm(as_of, run_id)   # T-173 (PB-50)

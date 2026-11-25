@@ -99,23 +99,27 @@ RE_SECRETO = re.compile(
     # guion entre grupos (antes, solo todo junto). T-122 (QA r01 de T-120, H-01): con cualquier espacio Unicode (el duro de
     # un IBAN copiado de una web o un PDF), hasta dos separadores seguidos y en cualquier agrupación (la impresa
     # «ES91 2100 0418 45 0200051332») y también en minúsculas: ES, dos cifras de control y 20 cifras
-    r"|(?-i:(\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
+    r"|(?-i:(?P<iban_es>\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(?P<dni>\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
-PATRONES_INYECCION = [
-    r"ignora(?:d)?\s+(?:todas\s+)?(?:las\s+)?instrucciones(?:\s+anteriores)?",
+# EST-06 inspecciona cadenas transportadas y los entregables redactados.
+# La dimensión (A/E/T/R/K) exige mayúscula: «sube a 120» es prosa financiera.
+PATRONES_EST06 = (
+    r"ignora(?:d)?\s+(?:todas\s+)?(?:(?:tus|las)\s+)?instrucciones(?:\s+anteriores)?",
     r"olvida\s+(?:tus|las)\s+(?:instrucciones|reglas)",
     r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions",
     r"disregard\s+(?:the\s+)?(?:previous|system)\s+(?:instructions|prompt)",
-    r"(?:nuevo|new)\s+system\s+prompt",
-    r"act[uú]a\s+como\s+si",
-    r"(?:asigna|pon|sube)\s+(?:una\s+)?(?:puntuaci[oó]n|nota|[AETRK]{1,2})\s+(?:de\s+|a\s+)?\d{2,3}",
-    r"(?:cambia|modifica)\s+(?:el|los)\s+(?:umbral|umbrales|par[aá]metros?)",
+    r"(?:asigna|pon|sube)\s+(?:una\s+)?(?:(?:la\s+)?puntuaci[oó]n|nota|(?-i:[AETRK]{1,2}))\s*(?:=|de|a)\s*\d{2,3}",
+    r"(?:nuevo|new)\s+system\s+prompt", r"act[uú]a\s+como\b",
+    r"a\s+partir\s+de\s+ahora", r"responde\s+solo", r"llama\s+a\s+la\s+herramienta",
+    r"(?m:^\s*(?:system|assistant)\s*:)", r"[\u200b-\u200f\u2060\ufeff]", r"<!--",
+    r"[?&](?:tool|function|action)=", r"<\s*/?\s*system\s*>",
     r"(?:env[ií]a|reenv[ií]a|manda)\s+(?:esto|el\s+informe|los\s+datos)\s+a",
-    r"you\s+are\s+now",
-    r"<\s*/?\s*system\s*>",
-]
-RE_INYECCION = re.compile("|".join(f"(?:{p})" for p in PATRONES_INYECCION), re.IGNORECASE)
+)
+RE_EST06 = re.compile("|".join(PATRONES_EST06), re.IGNORECASE)
+PATRONES_INYECCION = (*PATRONES_EST06, r"(?:cambia|modifica)\s+(?:el|los)\s+(?:umbral|umbrales|par[aá]metros?)",
+                      r"you\s+are\s+now")
+RE_INYECCION = re.compile("|".join(PATRONES_INYECCION), re.IGNORECASE)
 MARCA_RETIRADA = "[INSTRUCCION_INCRUSTADA_RETIRADA]"
 
 
@@ -472,13 +476,29 @@ def secretos_en_texto(texto) -> list[str]:
     y los «%XX» de una URL. Acepta `bytes` (H-26)."""
     if isinstance(texto, (bytes, bytearray)):
         texto = bytes(texto).decode("utf-8", errors="replace")
-    hallados: list[str] = []
+    return list(dict.fromkeys(indicio for _, indicio in _detecciones(texto)))
+
+
+def _detecciones(texto: str):
     for t in {texto, RE_ESCAPES.sub(" ", texto)}:
-        hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
-        hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
-        hallados += ibanes_en_texto(t) + tarjetas_en_texto(t)   # T-123
-        hallados += [m.group(0) for m in RE_CORREO.finditer(t)] + _asignaciones_de_clave(t)   # T-147
-    return list(dict.fromkeys(hallados))
+        for m in RE_SECRETO.finditer(t):
+            if m.group("iban_es"):
+                yield "IBAN", m.group(0)
+            elif m.group("dni"):
+                yield "IDENTIFICACION_PERSONAL", m.group(0)
+            else:
+                yield "CLAVE_API", m.group(0)
+        for m in RE_CANDIDATO_SK.finditer(t):
+            if _es_clave_sk(m.group(1)):
+                yield "CLAVE_API", m.group(0)
+        for indicio in ibanes_en_texto(t):
+            yield "IBAN", indicio
+        for indicio in tarjetas_en_texto(t):
+            yield "TARJETA", indicio
+        for m in RE_CORREO.finditer(t):
+            yield "CORREO", m.group(0)
+        for indicio in _asignaciones_de_clave(t):
+            yield "CLAVE_API", indicio
 
 
 def _textos(obj: Any):
@@ -491,6 +511,17 @@ def _textos(obj: Any):
     elif isinstance(obj, (list, tuple, set, frozenset)):   # T-103 (H-44): también `frozenset`, como `contenido_sensible`
         for v in obj:
             yield from _textos(v)
+
+
+def tipos_protegidos(obj):
+    """Solo etiquetas cerradas: ni los valores ni sus prefijos salen en la incidencia."""
+    volcado = json.dumps(obj, ensure_ascii=False, default=str)
+    tipos = {tipo for tipo, _ in _detecciones(volcado)}
+    for texto in _textos(obj):
+        if isinstance(texto, (bytes, bytearray)):
+            texto = bytes(texto).decode("utf-8", errors="replace")
+        tipos.update(tipo for tipo, _ in _detecciones(texto))
+    return sorted(tipos) or ["DATO_PROTEGIDO"]
 
 
 def contiene_credenciales(obj: Any) -> list[str]:
@@ -798,9 +829,11 @@ class Mensajeria:
             raise CanalNoPrevisto(f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)")
         cred = contiene_credenciales({k: v for k, v in msg.items() if k not in ("msg_id", "timestamp")})
         if cred:
-            campos = [k for k, v in msg.items() if contiene_credenciales(v)]
+            campos = ["campo_protegido" if contiene_credenciales(k) else k for k, v in msg.items()
+                      if contiene_credenciales(k) or contiene_credenciales(v) or contiene_credenciales({k: v})]
             self.almacen.incidencia("SEGURIDAD", "Mensaje con credenciales o datos personales rechazado íntegro (R8)",
-                                    msg["emisor"], campo_afectado=campos)
+                                    msg["emisor"], campo_afectado=campos,
+                                    tipos_dato=tipos_protegidos(msg))
             raise DatosSensibles(f"Mensaje {msg['msg_id']} con datos protegidos en {campos}")
         if not msg.get("run_id") and not msg.get("query_id") and msg["contrato"] not in ("CT-01", "CT-03", "CT-04", "CT-18", "CT-21", "CT-23", "CT-24", "CT-25"):
             raise MensajeInvalido("Falta run_id o query_id")
