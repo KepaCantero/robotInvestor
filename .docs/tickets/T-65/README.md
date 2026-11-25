@@ -144,7 +144,7 @@ Información de la r04 que no se toca: las formas de `refs-vivas` que el docstri
 3. CA-3: cada punto no hecho (o hecho en parte) tiene su motivo y su destino en este README.
 4. CA-4: ningún número nuevo se escribe en el código: sale de `por_defecto.yaml`, y los del operador llevan `[PROPUESTO]`.
 5. CA-5: la suite de `bloque_a` pasa entera y sube de 201; el gate completo da 12/12 (o, si falla, solo por archivos ajenos a este ticket, con la evidencia).
-6. CA-6: no se toca `sistema_global/`, `bloque_b/`, `bloque_a_forex/`, `.docs/memoria/`, el diario ni la deuda técnica; el corpus congelado no cambia.
+6. CA-6: no se toca `sistema_global/`, `bloque_b/`, `.docs/memoria/`, el diario ni la deuda técnica; el corpus congelado no cambia.
 
 ## Plan de pruebas
 

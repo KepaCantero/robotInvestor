@@ -26,40 +26,36 @@ ESTILO VISUAL (obligatorio):
   grises: solo glows dorados/verdes sobre negro.
 
 ARQUITECTURA QUE REPRESENTA (datos reales del proyecto):
-El sistema tiene 3 bloques que colaboran en cadena:
+El sistema tiene 2 bloques que colaboran en cadena:
 1) "BLOQUE A — BUSCADOR DE OPORTUNIDADES" (V5.1): 12 analistas por tipo de activo
    (Renta Variable, Renta Fija, Divisas, Cripto, Materias Primas, Inmobiliario,
    Alternativos, Derivados, Fondos, Monetarios, Índices, Tipos de Interés) +
    agentes horizontales (Analizador de Tendencias, Motor de Cálculo, MC-01..10,
    Auditor, Curador de Evidencia, Redactor).
-2) "BLOQUE A FOREX — MESA DE DIVISAS" (V1.1): 8 analistas de segmento (G10 núcleo,
-   G10 materias primas y escandinavas, Emergentes Asia/EMEA/LatAm, Bancos
-   Centrales, Estrategias y Cestas, Posicionamiento y Flujos, Prospectiva).
-3) "BLOQUE B — SELECCIÓN DE ACTIVOS" (V2.1): Director del Análisis de Mercado,
+2) "BLOQUE B — SELECCIÓN DE ACTIVOS" (V2.1): Director del Análisis de Mercado,
    12 analistas de dimensión (Demanda, Estructura Sectorial, Finanzas y Valoración,
    Macro y Ciclo, Oferta y Costes, Regulación, Tecnología, Flujos y Sentimiento,
    Prospectiva, Sostenibilidad, Emergentes), Motor de Cálculo y Seleccionador
    de Activos.
-Flujo: A y A-Forex detectan oportunidades y emiten "encargos" → B estudia el
+Flujo: A detecta oportunidades y emite "encargos" → B estudia el
 mercado y selecciona activos → salida para un backtester externo.
 
 LAYOUT DEL DASHBOARD:
 1. Header: rótulo LED principal "ROBOTINVESTOR · PISO DE TRADING MULTI-AGENTE",
    reloj en vivo (Europe/Madrid), indicador de ciclo (SEMANAL · LUN 07:00) y
    semáforo de modo (MOCK vs API REAL).
-2. Barra de sesiones de mercado (relevante para la mesa Forex): Sídney, Tokio,
+2. Barra de sesiones de mercado (relevante para las divisas): Sídney, Tokio,
    Londres, Nueva York con estado abierto/cerrado calculado por hora real y
    punto verde/rojo pulsante.
 3. Fila de KPIs globales (monospace, verde/rojo según signo): señales vigentes,
    encargos emitidos A→B, pronósticos resueltos, tasa de acierto global con IC90,
    horizonte principal dominante.
-4. Tres tarjetas-departamento grandes (una por bloque), cada una con:
+4. Dos tarjetas-departamento grandes (una por bloque), cada una con:
    rótulo LED con su nombre, versión del bloque, estado (● OPERANDO / EN ESPERA /
    ERROR), agentes activos/total, mini-gráfico de línea con la actividad por run,
    y 3-4 métricas propias:
    - Bloque A: señales nuevas del último run, top oportunidad (nombre, dirección
      LARGO/CORTO, prob_interna), distribución por tipo de activo.
-   - A-Forex: pares/ámbitos bajo seguimiento, oportunidad cambiaria top.
    - Bloque B: encargos recibidos, activos seleccionados, última decisión del
      Seleccionador.
 5. Sección "CADENA DE ENCARGOS" (pipeline visual): A → B con tarjetas pequeñas de
@@ -100,7 +96,7 @@ RESTRICCIONES TÉCNICAS:
 - No crees nada fuera de la carpeta dashboard/.
 
 CRITERIOS DE ACEPTACIÓN:
-- Al abrir dashboard/index.html se reconocen al instante los tres departamentos
+- Al abrir dashboard/index.html se reconocen al instante los dos departamentos
   con sus rótulos LED dorados y puntos de estado.
 - El feed en vivo agrega eventos cada pocos segundos y el pipeline de encargos
   se anima.

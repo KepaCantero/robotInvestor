@@ -6,7 +6,7 @@ Todo se ejecutó el 13-11-2026 en la copia de trabajo de la rama local `t118-tra
 | --- | --- | --- |
 | `tests/test_t118_hallazgos.py` | — | 93 |
 | Suite completa de A (`pytest -q tests`) | 3707 (las 3800 de ahora menos las 93 nuevas; no se volvió a ejecutar el árbol de partida) | **3800** en verde, 9 min 44 s |
-| A-Forex y B | 68 y 176 | no se tocan ni se ejecutaron |
+| B | 176 | no se toca ni se ejecuta |
 
 ## Criterio de aceptación → prueba
 

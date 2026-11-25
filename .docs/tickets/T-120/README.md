@@ -19,7 +19,7 @@ Corregir dos hallazgos que la QA r01 de T-116 encontró fuera de su ticket.
   - el máximo de lecciones por encargo sale de `aprendizaje.lecciones_por_encargo` (10, el del 12.3 del Documento 0).
 - No entra:
   - números de tarjeta: no hay ningún patrón hoy y uno de 16 cifras daría falsos positivos con series y códigos; queda en la deuda;
-  - IBAN de otros países; el Bloque A Forex, que tiene el mismo patrón (un bloque por tarea; además no se integra).
+  - IBAN de otros países.
 
 ## Diseño
 

@@ -67,7 +67,7 @@ Pero **H-01 (alta)**: CA-2 pide que no haya «una cifra individual reconstruible
 
 Vuelve a `ri-implementar` junto con T-127 H-04 (es una sola decisión para T-57): H-01 declarado o resuelto, H-02 corregido o declarado, con sus pruebas. En la r02 se vuelven a ejecutar `r01_01_barrido_un_componente.py` y `r01_02_troceo_y_una_moneda.py`.
 
-**Sin comprobar:** el gate entero; A-Forex y B; las 14 fichas del ejecutor V1.0 solo se han visto en la tabla y en el barrido (no tienen casos de control); ciclos con el modelo real.
+**Sin comprobar:** el gate entero; B; las 14 fichas del ejecutor V1.0 solo se han visto en la tabla y en el barrido (no tienen casos de control); ciclos con el modelo real.
 
 ---
 
@@ -135,4 +135,4 @@ El cambio de IDX-CONC-001 lo permite su ficha (amplitud y contribución a `null`
 
 Quedan **H-05 (media)**, la amplitud de IDX-CONC-001 con dos copias de la misma serie de precios es la de ese valor (la «copia a escala» que INC-T127-01 r03 da por cubierta, y una prueba del implementador la fija como correcta), y **H-06 (baja)**, la dominancia por grupos de CHR-FLOW-001 sin prueba (mutante vivo). Ninguno es crítico ni alto: pasan a la deuda técnica con su ID; H-05 conviene corregirlo antes del modo sombra. El cierre (estado, deuda, diario, commit) le toca a quien coordina.
 
-**Sin comprobar:** el gate entero, A-Forex y B (por instrucción); la fila de la deuda técnica en el árbol principal (H-04 de la r01); ciclos con el modelo real.
+**Sin comprobar:** el gate entero, B (por instrucción); la fila de la deuda técnica en el árbol principal (H-04 de la r01); ciclos con el modelo real.

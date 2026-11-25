@@ -27,7 +27,7 @@ git worktree add -q "$copia" "origin/$rama"
 
 piezas=$(git diff --name-only "origin/$base...origin/$rama" | cut -d/ -f1-2 | sort -u)
 codigo=0
-for ej in bloque_a bloque_a_forex bloque_b; do
+for ej in bloque_a bloque_b; do
   if grep -q "^$ej/" <<<"$piezas"; then
     echo "== pytest $ej (código de la rama)"
     (cd "$copia/$ej/11_Ejecutor" && PYTHONPATH="$PWD" "$PY" -m pytest -q -p no:cacheprovider 2>&1 | tail -3) || codigo=1

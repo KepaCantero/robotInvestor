@@ -24,9 +24,9 @@ los prompts solo definen el alcance de cada sesión.
 
 Reglas fijas (van dentro de cada prompt, no las quites): kit de contexto cerrado,
 F7/F8/F9 solo por identificador, corpus .md intocable, no mezclar bloques, líneas base
-de tests innegociables (58/68/118), decisiones documentadas en `docs/incidencias.md`,
+de tests innegociables (las de `tools/cuotas.txt`), decisiones documentadas en `docs/incidencias.md`,
 prefijo de commit por fase, avance en `docs/AVANCE.md`, y **cierre de fase =
-`./tools/check_all.sh` en verde (12/12)** con cuotas sin subir.
+`./tools/check_all.sh` en verde (10/10)** con cuotas sin subir.
 
 ## Entre fases
 
@@ -38,4 +38,4 @@ corrige antes. Una fase nueva no arranca con la anterior sin verificar.
 
 | Archivo | Qué hace | Modelo recomendado |
 |---|---|---|
-| `VERIF_F6_MEMORIA_APRENDIZAJE.md` | Solo lectura: ¿F6 (memoria de aprendizaje) está implementada en los ejecutores o es solo esquema? Matriz 3 bloques × 5 capacidades con evidencia + INC por hueco | el más capaz |
+| `VERIF_F6_MEMORIA_APRENDIZAJE.md` | Solo lectura: ¿F6 (memoria de aprendizaje) está implementada en los ejecutores o es solo esquema? Matriz 2 bloques × 5 capacidades con evidencia + INC por hueco | el más capaz |

@@ -6,7 +6,6 @@
 | --- | --- | --- |
 | `bloque_a/11_Ejecutor` (recogidas) | 8 188 | 8 204 (+16, `tests/test_t177_c4_credenciales.py`) |
 | `bloque_a/11_Ejecutor` (superadas en el gate) | — | 8 202 passed (base ≥ 607) |
-| `bloque_a_forex/11_Ejecutor` | 68 | 68 (sin tocar) |
 | `bloque_b/11_Ejecutor` | 176 | 176 (sin tocar) |
 | Evidencias del plan (pruebas citadas) | 240 | 250 de 250 superadas |
 

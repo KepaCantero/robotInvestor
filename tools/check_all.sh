@@ -16,13 +16,17 @@
 #   1. corpus-integridad   (goldens de robotTrading adaptados: el corpus .md
 #                           congelado por hash; re-congelado deliberado)
 #   2. nombres-nfc         (lección macOS: NFD rompe los tests)
-#   3. yaml-configs        (los 3 por_defecto.yaml parsean)
+#   3. yaml-configs        (los 2 por_defecto.yaml parsean)
 #   4. secrets             (repo público; allowlist explícita)
 #   5. refs-vivas          (rutas citadas en CLAUDE.md/prompts/docs existen —
 #                           antídoto contra planes rancios)
 #   6. ruff (cuota)        (código entregado no era ruff-limpio: ratchet)
-#   7-9. mypy (cuota ×3)   (ídem; las cuotas solo bajan)
-#   10-12. pytest ×3       (con línea base: >= 201 / 68 / 174; ver tools/cuotas.txt)
+#   7-8. mypy (cuota ×2)   (ídem; las cuotas solo bajan)
+#   9-10. pytest ×2        (con línea base: >= 607 / 174; ver tools/cuotas.txt)
+#
+# Bloques: A y B, desde T-204 (orden del operador del 25-11-2026). La prueba
+# .docs/scripts/pruebas_gate_bloques.py falla si este script o tools/cuotas.txt
+# vuelven a nombrar un bloque que no existe.
 #
 # Retirados conscientemente (y por qué): ruff-format y format-check (reescribiría
 # 3.100 líneas de código entregado antes de tiempo), vulture (falso positivo
@@ -47,8 +51,8 @@ if [ -f .venv/bin/activate ]; then
     source .venv/bin/activate
 fi
 PY=".venv/bin/python"
-EJECUTORES=(bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor)
-PAQUETES=(bloque_a bloque_a_forex bloque_b)
+EJECUTORES=(bloque_a/11_Ejecutor bloque_b/11_Ejecutor)
+PAQUETES=(bloque_a bloque_b)
 
 CORE_ONLY=false
 STRICT_MODE=false
@@ -133,7 +137,7 @@ run_check "nombres-nfc" $PY tools/nfc_check.py
 section "CONFIGURACIÓN Y SEGURIDAD"
 run_check "yaml-configs" $PY -c "
 import yaml, sys
-for f in ['bloque_a/11_Ejecutor/config/por_defecto.yaml','bloque_a_forex/11_Ejecutor/config/por_defecto.yaml','bloque_b/11_Ejecutor/config/por_defecto.yaml']:
+for f in ['bloque_a/11_Ejecutor/config/por_defecto.yaml','bloque_b/11_Ejecutor/config/por_defecto.yaml']:
     yaml.safe_load(open(f, encoding='utf-8')); print('ok', f)
 "
 run_check "secrets" $PY tools/secrets_scan.py
@@ -152,7 +156,7 @@ if [ "$CORE_ONLY" = false ]; then
     fi
 
     if command -v .venv/bin/mypy &> /dev/null; then
-        for i in 0 1 2; do
+        for i in "${!PAQUETES[@]}"; do
             paq="${PAQUETES[$i]}"
             actual="$(.venv/bin/mypy --ignore-missing-imports --no-error-summary "${EJECUTORES[$i]}/$paq" 2>/dev/null | wc -l | tr -d ' ')"
             gate_cuota "mypy $paq" "$actual" "$(cuota mypy_$paq)"
@@ -164,8 +168,7 @@ fi
 
 section "TESTS (líneas base innegociables)"
 pytest_con_base "pytest bloque_a"        "${EJECUTORES[0]}" "$(cuota pytest_bloque_a)"
-pytest_con_base "pytest bloque_a_forex"  "${EJECUTORES[1]}" "$(cuota pytest_bloque_a_forex)"
-pytest_con_base "pytest bloque_b"        "${EJECUTORES[2]}" "$(cuota pytest_bloque_b)"
+pytest_con_base "pytest bloque_b"        "${EJECUTORES[1]}" "$(cuota pytest_bloque_b)"
 
 # ============================================
 section "RESUMEN"

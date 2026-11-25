@@ -1,0 +1,83 @@
+--- a/sistema_global/constitucion/Constitucion_Global.md
++++ b/sistema_global/constitucion/Constitucion_Global.md
+@@ -1,10 +1,10 @@
+-# Constitución Global del Robot Inversor — V0.6
+-
+-Nov 9, 2026 · @Dani
++# Constitución Global del Robot Inversor — V0.7
++
++Nov 25, 2026 · @Dani
+ 
+ ## 0. Estado, alcance y modo de uso
+ 
+-Esta V0.6 (9 de noviembre de 2026) **sustituye a la V0.5**: incorpora la **enmienda 3** (T-59: cuestionario guiado de configuración, valores por defecto para cualquier usuario, cambios a través del Broker y una copia por usuario), **ratificada por el operador** ese mismo día (cambios 39 a 42 y decisiones D-44 a D-47). La V0.5 (9 de noviembre de 2026) sustituyó a la V0.4: incorporó la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Ese mismo día el operador ratificó también las decisiones de la V0.1 que seguían propuestas (D-08 a D-16) y los apartados que no dependían de ninguna decisión numerada (D-43): **toda la Constitución queda ratificada**, salvo los valores que el operador tiene aplazados (pendientes P-xx, sesión T-57). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
++Esta V0.7 (25 de noviembre de 2026) **sustituye a la V0.6**: incorpora la **enmienda 6** (T-204: el Bloque A Forex se elimina del repositorio y de este texto), **ordenada por el operador** ese mismo día con su consentimiento expreso (cambio 43 y decisión D-48). La V0.6 (9 de noviembre de 2026) sustituyó a la V0.5: incorporó la **enmienda 3** (T-59: cuestionario guiado de configuración, valores por defecto para cualquier usuario, cambios a través del Broker y una copia por usuario), **ratificada por el operador** ese mismo día (cambios 39 a 42 y decisiones D-44 a D-47). La V0.5 (9 de noviembre de 2026) sustituyó a la V0.4: incorporó la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Ese mismo día el operador ratificó también las decisiones de la V0.1 que seguían propuestas (D-08 a D-16) y los apartados que no dependían de ninguna decisión numerada (D-43): **toda la Constitución queda ratificada**, salvo los valores que el operador tiene aplazados (pendientes P-xx, sesión T-57). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
+ 
+ **Alcance.** Sistema personal de inversión con **capital propio únicamente**: investiga, analiza, compara, construye carteras, controla el riesgo, ejecuta bajo autorización y aprende de sus resultados. No presta servicio a terceros; si eso cambiara, habría que revisar la normativa aplicable antes de seguir. `[RATIFICADO]` (D-47) **Una copia por usuario:** varias personas pueden usarlo, cada una con **su propia copia y su propio dinero**. Cada copia es de un solo usuario y gestiona solo su capital; en este documento, «operador» es el usuario de cada copia. Si un usuario gestionara el dinero de otro, le recomendara inversiones personalizadas o cobrara por ello, ya no sería uso privado y habría que consultar antes a un abogado (normativa de la CNMV y MiFID II).
+ 
+@@ -48,7 +48,7 @@
+ 
+ | N.º | Cambio | Problema que resuelve | Sección |
+ | --- | --- | --- | --- |
+-| 17 | **A Forex y B Forex fuera** del sistema; se usan A y B generales, que analizan todo tipo de activos. La Fase 1 sigue en divisas | Eran pruebas; dos variantes de los mismos bloques | §2, §14 |
++| 17 | **B Forex fuera** del sistema; se usan A y B generales, que analizan todo tipo de activos. La Fase 1 sigue en divisas (texto reducido por la enmienda 6, D-48) | Era una prueba: una variante del mismo bloque | §2, §14 |
+ | 18 | **Broker Personal** como bloque (sus tres papeles), con lenguaje para inexpertos, **perfil inversor y de riesgo** construido en las conversaciones y **política de inversión personal** | El operador no es experto; decisiones en caliente | §2, §3, §6 |
+ | 19 | **Contrapesos de la abstención** (referencia invertida, embudo visible, alarma de sequía, seguimiento de lo descartado) y **cartera sombra pasiva** como prueba de que el robot aporta valor | Que el control no deje invertir nunca; invertir sin aportar nada | §1, §7, §9 |
+ | 20 | **Intercambio entre bloques por el Orquestador** y **registros comunes** (análisis vigentes, riesgos geopolíticos, tendencias tecnológicas, posicionamiento) | Trabajo duplicado; datos alterados por un LLM en el camino | §2, §3 |
+@@ -84,6 +84,12 @@
+ | 40 | **Valores por defecto prudentes para cualquier usuario**, con su justificación; el cuestionario solo personaliza | Un sistema que no funciona hasta que alguien decide todo | §6, §10, §15 |
+ | 41 | **Cambios posteriores por el mismo cuestionario, a cargo del Broker Personal**, con la asimetría de riesgo y la validación de siempre | Cambiar la configuración exige saber dónde y cómo | §2, §6 |
+ | 42 | **Una copia por usuario:** cada persona con su copia y su dinero; nada personal en el repositorio; actualizar el código sin perder los datos; copias sin datos compartidos por defecto | El operador y sus compañeros quieren usarlo, cada uno con lo suyo | §0, §10, §12, §13, §16 |
++
++**Qué cambia de la V0.6 a la V0.7 (enmienda 6).** `[RATIFICADO]` el 25 de noviembre de 2026 (T-204), por orden expresa del operador: «Elimina el bloque A Forex definitivamente» y «Haz esas tres cosas. Te doy mi consentimiento». Las enmiendas 4 y 5 siguen propuestas; la numeración provisional de la 5 se corre en uno.
++
++| N.º | Cambio | Problema que resuelve | Sección |
++| --- | --- | --- | --- |
++| 43 | **Fuera el Bloque A Forex:** se elimina del repositorio, de sus gates y de este texto (cambio 17, §2, §14 y D-20); las divisas las sigue cubriendo el Bloque A general | Una prueba antigua que ya no forma parte del sistema seguía en el repositorio y en la Constitución | §0, §2, §14, §15 |
+ 
+ ## 1. Propósito y principios rectores
+ 
+@@ -120,7 +126,7 @@
+ 
+ **Todo bloque sirve para cualquier tipo de activo.** `[RATIFICADO]` (D-42, regla del operador del 8-11-2026) Ningún bloque se diseña «para divisas» ni para un solo tipo de activo: todos se diseñan desde el primer día como núcleo común más perfiles, y la Fase 1 en divisas es solo el primer recorrido completo. Hoy solo el perfil `C-DIV` es específico de divisas. `[RATIFICADO]` Encaje con la Fase 2: los bloques **nuevos** nacen ya con núcleo y perfiles; A y B, que ya existen, se reorganizan en la Fase 2, cuando haya un segundo perfil real con que comprobar qué es núcleo y qué es perfil.
+ 
+-La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14), cuando exista un segundo perfil real. Con un solo caso se adivina el núcleo; con dos se deriva. Hasta entonces, A (V5.1) y B (V2.1) se usan tal cual, con adaptadores mínimos. `[RATIFICADO]` A Forex y B Forex fueron pruebas y **no forman parte del sistema** (D-20); las divisas las cubren A y B generales (en A, su Analista de Divisas ya funciona con 5 de sus 11 fichas FX programadas; faltan FX-BEER, FX-BRK, FX-COINT, FX-PPA, FX-REGIME y FX-STL).
++La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14), cuando exista un segundo perfil real. Con un solo caso se adivina el núcleo; con dos se deriva. Hasta entonces, A (V5.1) y B (V2.1) se usan tal cual, con adaptadores mínimos. `[RATIFICADO]` B Forex fue una prueba y **no forma parte del sistema** (D-20; texto reducido por la enmienda 6, D-48); las divisas las cubren A y B generales (en A, su Analista de Divisas ya funciona con 5 de sus 11 fichas FX programadas; faltan FX-BEER, FX-BRK, FX-COINT, FX-PPA, FX-REGIME y FX-STL).
+ 
+ **Perfiles como paquetes de entrega propios.** `[RATIFICADO]` (D-17) Cada perfil `C-<COD>` es complejo (muchos agentes, fuentes y playbooks) y se construye, prueba y entrega como un **paquete propio**, igual que un bloque. Lo que no tiene propio es el esqueleto: todos cumplen el mismo núcleo y el mismo sobre CT-G-02, y ninguno los modifica por su cuenta (una enmienda se propone en el §15). Cada perfil tiene un estado: `ACTIVO` o `NO_CONSTRUIDO`. Un perfil `NO_CONSTRUIDO` devuelve `NO_ESTIMABLE` y el Broker no lo encarga. Un perfil solo se promueve a bloque independiente si necesita su propia frontera de seguridad o su propio modo de fallo (por ejemplo, `C-DER` o `C-CRI`).
+ 
+@@ -672,7 +678,7 @@
+ 
+ | Pieza | Estado |
+ | --- | --- |
+-| A V5.1 y B V2.1 | Construidos; se usan tal cual con adaptadores hasta la Fase 2, pero `[RATIFICADO]` (D-42) antes de conectarlos se revisan y se mejoran con el operador (T-53). A ya analiza divisas (Analista de Divisas y 5 de 11 fichas FX programadas; faltan 6). A Forex y B Forex quedan fuera (D-20) |
++| A V5.1 y B V2.1 | Construidos; se usan tal cual con adaptadores hasta la Fase 2, pero `[RATIFICADO]` (D-42) antes de conectarlos se revisan y se mejoran con el operador (T-53). A ya analiza divisas (Analista de Divisas y 5 de 11 fichas FX programadas; faltan 6). B Forex queda fuera (D-20; enmienda 6, D-48) |
+ | Sobre CT-G-02 y marco común de C | Código de referencia en curso (V0.53, 8 de noviembre de 2026), con datos simulados: recorre la Fase 1 de punta a punta con versiones mínimas de referencia del Orquestador y de D, E, F, G, H y K, que guardan un único estado |
+ | C-DIV | Parcialmente desarrollado por otro LLM; el operador no lo ha compartido todavía |
+ | Otros perfiles de C, D, E, F, G, H, I, J | Sin construir como bloques: D, E, F, G y H solo existen como código de referencia mínimo en el marco común; el resto, solo con su ficha de interfaz (§2) |
+@@ -736,7 +742,7 @@
+ | D-17 | Perfiles C como paquetes propios bajo un solo núcleo, con estados ACTIVO y NO\_CONSTRUIDO; solo se construye el que una cartera necesite | RATIFICADO | 2026-11-05 |
+ | D-18 | Bloques K (datos), N (consola) y M (riesgo de cartera, Fase 3); noticias como servicio aislado SC-11; sin bloque L | RATIFICADO | 2026-11-05 |
+ | D-19 | Criterio de bloque nuevo (3 de 5) y tope de 8 bloques activos en las Fases 1 y 2 | RATIFICADO | 2026-11-05 |
+-| D-20 | A Forex y B Forex fuera del sistema; A y B generales; la Fase 1 sigue en divisas | RATIFICADO | 2026-11-07 |
++| D-20 | B Forex fuera del sistema; A y B generales; la Fase 1 sigue en divisas (texto reducido por la enmienda 6, D-48) | RATIFICADO | 2026-11-07 |
+ | D-21 | Broker Personal como bloque en tres papeles, con lenguaje para inexpertos, perfil inversor y de riesgo y política de inversión personal | RATIFICADO | 2026-11-07 |
+ | D-22 | Contrapesos de la abstención (referencia invertida, embudo, alarma de sequía, seguimiento de lo descartado) y cartera sombra pasiva | RATIFICADO | 2026-11-07 |
+ | D-23 | Intercambio entre bloques por el Orquestador y registros comunes | RATIFICADO | 2026-11-07 |
+@@ -763,6 +769,7 @@
+ | D-45 | Valores por defecto prudentes y justificados para cualquier usuario; todo parámetro nuevo llega con su valor por defecto y su pregunta | RATIFICADO | 2026-11-09 |
+ | D-46 | Cambios posteriores por el mismo cuestionario, a cargo del Broker Personal, con la asimetría de riesgo (§6) y la ruta única de cambios (§9) | RATIFICADO | 2026-11-09 |
+ | D-47 | Una copia por usuario con su propio dinero; D-01 se aplica por copia; nada personal en el repositorio; actualización con migraciones; copias sin datos compartidos por defecto | RATIFICADO | 2026-11-09 |
++| D-48 | Enmienda 6 (T-204): el Bloque A Forex se elimina del repositorio y de esta Constitución por orden expresa del operador; el sistema queda con los Bloques A y B generales y los demás del mapa (§2), sin cambios; D-20 queda con B Forex | RATIFICADO | 2026-11-25 |
+ | D-43 | Ratificación de los apartados sin decisión numerada: verificación diversa (§3), catálogo de contratos globales (§5), tabla de las tres carteras (§7), ciclo de vida de una estrategia (§7), memoria y aprendizaje realista (§9) y fallos y modos degradados (§11) | RATIFICADO | 2026-11-09 |
+ 
+ **Pendientes del operador.** `[RATIFICADO]` (D-42) Las decisiones de perfil y técnicas del operador se aplazan hasta completar la arquitectura global. Mientras tanto se construye en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]`; solo se le pregunta lo que cambie la arquitectura y no tenga un valor de partida razonable; nada opera con dinero real ni pasa una compuerta que exija datos reales hasta que decida; y al final se le presentan todas en una sola sesión, cada una con su valor de partida y lo que cambia según su respuesta (T-57), conducida por el asesor de configuración (§2) en formato de cuestionario guiado (D-44).
+@@ -823,7 +830,7 @@
+ | 12 | Contratos congelados antes de tiempo | Congelación diferida | §5 |
+ | 13 | Fiscalidad | Reglas codificadas y validadas por asesor | §3, §10 |
+ 
+-**Enmiendas.** Se proponen aquí, se ratifican por el operador y generan una nueva versión. Ninguna conversación de construcción las aplica por su cuenta. La enmienda 1 se ratificó el 7-11-2026 (V0.4). La **enmienda 2** se aplicó el 9-11-2026 a petición del operador y él la ratificó ese mismo día (V0.5); sus números quedan pendientes (P-25 a P-35) para la sesión de decisiones (T-57). La **enmienda 3** (T-59) se aplicó y ratificó el 9-11-2026 (V0.6).
++**Enmiendas.** Se proponen aquí, se ratifican por el operador y generan una nueva versión. Ninguna conversación de construcción las aplica por su cuenta. La enmienda 1 se ratificó el 7-11-2026 (V0.4). La **enmienda 2** se aplicó el 9-11-2026 a petición del operador y él la ratificó ese mismo día (V0.5); sus números quedan pendientes (P-25 a P-35) para la sesión de decisiones (T-57). La **enmienda 3** (T-59) se aplicó y ratificó el 9-11-2026 (V0.6). La **enmienda 6** (T-204) se aplicó el 25-11-2026 por orden expresa del operador, que dio su consentimiento ese día (V0.7); las enmiendas 4 y 5 siguen propuestas.
+ 
+ ## 16. Glosario
+ 

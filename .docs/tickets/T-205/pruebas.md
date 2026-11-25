@@ -3,7 +3,7 @@
 | Suite | Antes (`origin/develop` 358576c3) | Después |
 | --- | --- | --- |
 | Bloque A (`pytest bloque_a/11_Ejecutor`, recogidas) | 8546 | 8571 (+25 de `tests/test_t205_clase_seguimiento.py`; `test_t201_cuotas.py` mantiene sus casos) |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 La línea base de A (607) se respeta con holgura.
 

@@ -38,4 +38,4 @@ Copia desechable con el código de HEAD (`frontera_b.py`, `cadena_b.py`, `cadena
 | ruff (`… bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l`) | 2838 (cuota 2838; los ficheros tocados, sin avisos) |
 | mypy de A (`… bloque_a/11_Ejecutor/bloque_a \| wc -l`) | 109 (cuota 109) |
 
-`./tools/check_all.sh` entero no se ejecutó: A-Forex y B no se tocan y la suite de A se ejecutó una vez, aparte.
+`./tools/check_all.sh` entero no se ejecutó: B no se toca y la suite de A se ejecutó una vez, aparte.

@@ -128,7 +128,7 @@ F7: 560 fichas, 0 desempates al revés contiguos y 0 en toda la secuencia de cad
 
 ### Lo que no comprobé
 
-- El gate completo (`check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`check_all.sh`), B (encargo).
 
 ## Veredicto (r02)
 

@@ -14,7 +14,7 @@ Que el gate deje de caer por la carga de la máquina. El 18-11-2026, `test_t165_
 
 ## Inventario (las tres suites)
 
-Búsqueda de `time.time`, `perf_counter`, `monotonic`, `process_time`, `datetime.now`, `sleep`, `timeout`, `Barrier`, `join(`, `.wait(` y `Event` (r02, H-03) en `bloque_a/11_Ejecutor/tests`, `bloque_a_forex/11_Ejecutor/tests` y `bloque_b/11_Ejecutor/tests`. A-Forex y B no tienen ninguna prueba de tiempo. En A:
+Búsqueda de `time.time`, `perf_counter`, `monotonic`, `process_time`, `datetime.now`, `sleep`, `timeout`, `Barrier`, `join(`, `.wait(` y `Event` (r02, H-03) en `bloque_a/11_Ejecutor/tests` y `bloque_b/11_Ejecutor/tests`. B no tiene ninguna prueba de tiempo. En A:
 
 | Prueba | Medía | Camino | Qué protege |
 | --- | --- | --- | --- |
@@ -81,7 +81,7 @@ Contar operaciones sirve donde el coste son llamadas de Python. En ST-INF-001 se
 | `mutantes.py`: M01 a M19 con carga (M14–M15, H-01; M12–M13 por recuento, H-02; M16–M19, T-102, H-04) | mutantes | CA-3 |
 | Scripts del revisor `r01_01`, `r01_02`/`r01_03`, la tanda estrangulada de `r01_05` y `razon_t165.py 1000` (`r01_06`) | regresión de la QA | CA-2, CA-3, CA-4 |
 | Diferencia de las pruebas (`git diff`) | revisión | CA-4 |
-| Suites de A, A-Forex y B, `check_all.sh` | regresión | CA-5 |
+| Suites de A y B, `check_all.sh` | regresión | CA-5 |
 
 ## Scripts
 

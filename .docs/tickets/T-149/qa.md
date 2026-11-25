@@ -60,7 +60,7 @@ Scripts de esta ronda, en `revisores/` (desde la raíz de la copia, en este orde
 3. `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_03_r8_y_g3_qa.py <carpeta temporal>`: R8 (R1–R5) y G3 (G1, G2); termina con 1 por H-01, H-02 y H-04.
 4. `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_04_bce_qa.py <carpeta temporal>`: termina con 1 por H-06.
 
-No comprobado: `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; `T-142/revisores/r02_cadena_doce_tipos.sh` (la cadena de punta a punta sí, con la configuración por defecto); el ciclo real con un G3 BLOQUEADO de verdad (se simula la salida de `bloque-a ciclo`, como en las pruebas).
+No comprobado: `./tools/check_all.sh` entero, B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; `T-142/revisores/r02_cadena_doce_tipos.sh` (la cadena de punta a punta sí, con la configuración por defecto); el ciclo real con un G3 BLOQUEADO de verdad (se simula la salida de `bloque-a ciclo`, como en las pruebas).
 
 ## Veredicto
 

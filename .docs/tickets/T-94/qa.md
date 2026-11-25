@@ -143,7 +143,7 @@ Se ejecutan con `.venv/bin/python -B <script> .docs/scripts` desde la raíz (o u
 | CA-5 | sí, con salvedad | `veredicto([0, x])` y `[x, 0]` dan «todavía no se sabe» (M02 muere). El rango sigue sin recoger el solape entre fechas (H-13) |
 | CA-6 | sí | Sin precio final, sin resolver y fuera de la media (`test_sin_precio_final_queda_sin_resolver`, M07 muere); un cierre vacío o NaN ya no cuenta como resuelto: detiene el banco (`r02_03` adaptado) |
 | CA-7 | sí | Con el cliente simulado, la primera línea de `informe.md` es el aviso; con otro cliente y los datos de ejemplo, el aviso dice solo lo de los datos (`r01_06`) |
-| CA-8 | sí | `r01_06`: `git status` de `bloque_a`, `bloque_b`, `bloque_a_forex`, `sistema_global/marco_comun_c` y «.docs/experimentos» igual antes y después; `git status` y `git diff` del worktree de mutantes vacíos tras los 46 mutantes |
+| CA-8 | sí | `r01_06`: `git status` de `bloque_a`, `bloque_b`, `sistema_global/marco_comun_c` y «.docs/experimentos» igual antes y después; `git status` y `git diff` del worktree de mutantes vacíos tras los 46 mutantes |
 
 ### Hallazgos nuevos
 

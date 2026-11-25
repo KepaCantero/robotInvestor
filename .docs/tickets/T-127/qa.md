@@ -66,7 +66,7 @@ Leídas en el diff. Ninguna se ha quitado ni rebajado sin motivo: las de dispers
 | ruff | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | **2902** (cuota 2902) |
 | mypy A como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
 | Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (con mis scripts ya en la copia); corpus 695 |
-| Gate entero, A-Forex y B | — | no lanzados (por instrucción; pasaron en el commit) |
+| Gate entero, B | — | no lanzados (por instrucción; pasaron en el commit) |
 
 ## Veredicto
 
@@ -78,7 +78,7 @@ Pero el objetivo central de T-127, cerrar H-10 («ninguna petición da las cifra
 
 Vuelve a `ri-implementar`: H-01 con su prueba (copias a escala rechazadas en las tres fichas), y H-02 declarado o corregido. En la r02 se vuelve a ejecutar `r01_01_frontera_otras_vias.py`.
 
-**Sin comprobar:** el gate entero; A-Forex y B; REI-NAV-001 (fuera del alcance, anotado en INC-T127-01); ciclos con el modelo real.
+**Sin comprobar:** el gate entero; B; REI-NAV-001 (fuera del alcance, anotado en INC-T127-01); ciclos con el modelo real.
 
 ---
 
@@ -144,7 +144,7 @@ Leídas en el diff `fb3ccd4..f7faa1b`. `test_fir_cred_limites_del_dominio_que_se
 | ruff | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | **2902** (cuota 2902) |
 | mypy A como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
 | Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (con mis scripts en la copia); corpus 695 |
-| Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+| Gate entero, B | — | no lanzados (por instrucción) |
 
 ## Veredicto (r02)
 
@@ -156,7 +156,7 @@ Pero el objetivo que la ronda vuelve a afirmar no se cumple: **H-04 (alta)**, un
 
 Vuelve a `ri-implementar`: H-04 declarado o resuelto, con su prueba; H-05, la frase corregida (o la aportación con signo). En la r03 se vuelve a ejecutar `r02_01_troceo_y_simetria.py` (si H-04 se declara, sus FALLA de las vías T y S pasan a ser el límite declarado y el script se lee así).
 
-**Sin comprobar:** el gate entero; A-Forex y B; ciclos con el modelo real.
+**Sin comprobar:** el gate entero; B; ciclos con el modelo real.
 
 ---
 
@@ -228,7 +228,7 @@ Desde la raíz de la copia, con `.venv` enlazado al del repositorio (enlace borr
 | ruff | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | **2902** (cuota 2902) |
 | mypy A como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
 | Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (con mis scripts en la copia); corpus 695 |
-| Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+| Gate entero, B | — | no lanzados (por instrucción) |
 
 ## Veredicto (r03)
 
@@ -242,4 +242,4 @@ Los criterios CA-10 a CA-12 se cumplen y los nueve de la r01 siguen cumpliéndos
 
 H-06, H-07 y H-08 (bajos) pasan a la deuda técnica con su ID. Cerrar la tarea (estado, deuda, diario, memoria, commit) le toca a quien coordina: por instrucción, este revisor no hace commit ni toca otros archivos.
 
-**Sin comprobar:** el gate entero (`./tools/check_all.sh`), A-Forex y B (por instrucción); ciclos con el modelo real; el comportamiento de un agente analista real al construir componentes.
+**Sin comprobar:** el gate entero (`./tools/check_all.sh`), B (por instrucción); ciclos con el modelo real; el comportamiento de un agente analista real al construir componentes.

@@ -27,7 +27,7 @@ Desde la raíz de la copia, con las herramientas del repositorio (`ruff` 0.17.4,
 | Goldens CT | `cd bloque_a/11_Ejecutor && py tests/goldens_ct.py` | «goldens de contratos: coinciden» |
 | ruff y mypy | arriba | 2838 ≤ 2838; 109 ≤ 109 |
 | Gates ligeros | `py tools/secrets_scan.py`, `refs_vivas.py`, `nfc_check.py`, `corpus_integridad.py` | Secretos sin hallazgos (también con mis scripts de `revisores/`); refs vivas, NFC y corpus (695 archivos) en verde |
-| No lanzado (por instrucción) | `./tools/check_all.sh`, suites de A-Forex y B | — |
+| No lanzado (por instrucción) | `./tools/check_all.sh`, suites de B | — |
 
 ## Criterios de aceptación
 

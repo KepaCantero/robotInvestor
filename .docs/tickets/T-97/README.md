@@ -50,7 +50,7 @@ Son **valores por defecto para cualquier copia** (D-45), no el perfil de nadie: 
   - **la discrepancia 6, los papeles del Broker:** resuelta en el diseño (E6), sin código en el marco;
   - el resto de respuestas de la tanda 2 que no son discrepancias (F3, F4, F5, H2 a H5, M1 a M4, A1, A2): son funciones nuevas y van con la construcción de cada bloque;
   - la asimetría de F por tipo de acción y el reequilibrio (cambios 47 y 78): esperan a la ratificación de la enmienda 5;
-  - los bloques A, A-Forex y B, y la Constitución.
+  - los bloques A y B, y la Constitución.
 
 ## Diseño
 
@@ -88,7 +88,7 @@ Son **valores por defecto para cualquier copia** (D-45), no el perfil de nadie: 
 7. CA-7: un estado guardado con V0.73 se abre con MIG-010, recibe las claves nuevas con su valor por defecto y conserva los valores que tenía.
 8. CA-8: `parametros_doc.py` documenta todas las claves nuevas (`faltan()` y `desfasados()` vacíos).
 9. CA-9: las 61 baterías del marco y las nuevas pasan (`.docs/scripts/pruebas_marco.sh`), el `LEEME.md` coincide con el disco (`.docs/scripts/leeme_marco.py`) y el gate del repositorio da 12/12.
-10. CA-10: no cambia ningún fichero de los bloques A, A-Forex ni B, ni de la Constitución.
+10. CA-10: no cambia ningún fichero de los bloques A ni B, ni de la Constitución.
 
 ## Plan de pruebas
 

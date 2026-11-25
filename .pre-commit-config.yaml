@@ -2,7 +2,7 @@
 # Instalación:  .venv/bin/pre-commit install
 # El corpus canónico (bloque_*/ salvo 11_Ejecutor) queda EXCLUIDO de los fixers:
 # es fuente de verdad y no se debe tocar ni con un espacio en blanco.
-# El QA completo vive en tools/check_all.sh (12 gates); aquí solo lo barato.
+# El QA completo vive en tools/check_all.sh (10 gates); aquí solo lo barato.
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

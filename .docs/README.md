@@ -4,6 +4,8 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 
 **¿Chat nuevo o recién llegado?** Empieza por el relevo más reciente: `.docs/tickets/_relevo/2026-11-11_relevo_nuevo_chat.md` (estado del proyecto, dónde está cada cosa y cómo se trabaja).
 
+**Bloque A Forex.** Se eliminó del repositorio el 25-11-2026 por orden del operador (T-204). Los tickets, el diario y la memoria que lo citan se conservan como registro; `tools/refs_vivas.py` lo trata como bloque retirado.
+
 | Carpeta | Para qué sirve | Quién escribe |
 | --- | --- | --- |
 | `.docs/README.md` | Este índice y las reglas | Cualquiera, con cuidado |
@@ -48,6 +50,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/cola_astra.py` | Cola de Astra (`.docs/tickets/_relevo/cola_astra.md`): la siguiente tarea y lo que se podría perder (marcada HECHA sin entregable, entregable sin marcar, borradores, EN CURSO abandonado, cambios sin subir); `--json` para automatizar. Pruebas en `.docs/scripts/pruebas_cola_astra.py` (pytest, con un repositorio y una cola de prueba propios; lo ejecuta `pruebas_scripts.sh`, T-194) y mutantes en `.docs/tickets/T-194/mutantes.py` |
 | `.docs/scripts/pruebas_autor_generico.py` | Autor genérico de los commits (operador, 24-11-2026): comprueba que `requiere_autor_generico` de `common.sh` (lo llaman `commit.sh` y `commit_limpio.sh` antes del gate) y `cola_astra.py` aceptan solo los pares de `AUTORES_GENERICOS` y rechazan un nombre o un correo personal, en el entorno, en `.env` o en el git config, sin repetirlo en el mensaje. Lo ejecuta `pruebas_scripts.sh` |
 | `.docs/scripts/registro_experimentos.py` | Registro de experimentos (T-99): prerregistro sellado, intentos y resultados en un fichero encadenado por huellas, uno por agente (por defecto «.docs/experimentos/registro_<RI_AGENTE>.jsonl», que nace con el primer experimento), con ancla en el historial de git y un sello local que no se sube; dice si un resultado es adoptable. Órdenes: prerregistrar, intento, resultado, ver, verificar y sellar (solo registros de la 0.1.0). El banco de medida lo usa. Pruebas en `.docs/scripts/pruebas_registro_experimentos.py` |
+| `.docs/scripts/pruebas_gate_bloques.py` | Pruebas del gate tras quitar el Bloque A Forex (T-204): `tools/check_all.sh`, `tools/cuotas.txt` y los scripts que enumeran los bloques no lo vuelven a nombrar; el gate real, con herramientas falsas, cuenta 10 comprobaciones (7 con `--core`) sobre A y B, cada uno con su línea base; `preparar_entorno.sh` y `qa_rama.sh` siguen la lista del gate; y pasa `prueba_refs_vivas.py`. Lo ejecuta `pruebas_scripts.sh` |
 | `.docs/scripts/pruebas_scripts.sh` | Ejecuta todas las pruebas de `.docs/scripts` y exige que no bajen de la línea base de `.docs/scripts/linea_base_pruebas.txt`. Lo llaman `commit.sh` y `commit_limpio.sh` |
 | `.docs/scripts/pruebas_borradores_contratos.py` | Pruebas de los borradores de esquema de `.docs/diseno/contratos/` (CT-G-08 0.4.0 y CT-G-24 0.1.0) |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |

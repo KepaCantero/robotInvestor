@@ -32,7 +32,7 @@ Cada pieza pasó por una revisión independiente antes de cerrarse. Lo que queda
 ## 3. Las enmiendas de la Constitución (7 a 9-11-2026)
 
 - **Enmienda 1 → V0.4** (7-11, T-55):
-  - A Forex y B Forex quedan fuera del Robot Investor (D-20); la Fase 1 se hace en divisas con los A y B generales;
+  - B Forex queda fuera del Robot Investor (D-20); la Fase 1 se hace en divisas con los A y B generales;
   - radar tecnológico, small caps, startups y spin-offs, seguimiento de grandes inversores;
   - números ratificados (D-27). Las respuestas del operador sobre intermediario, presupuesto, capital y avisos están en T-56.
 - **Decisiones aplazadas** (8-11, T-57): las decisiones técnicas y de perfil del operador se aplazan a una sesión única al completar la arquitectura. Mientras, se trabaja con valores por defecto `[PROPUESTO]` en simulado.

@@ -123,7 +123,7 @@ Observaciones, sin ID: **O-1** tras el plural («las acciones acwi»), «la acci
 
 ### Sin comprobar
 
-- El gate completo y las suites de A-Forex y B (no relanzados, ver arriba).
+- El gate completo y la suite de B (no relanzados, ver arriba).
 - Los supervivientes, contra la suite completa de A: solo contra 573 pruebas (las 57 nuevas y 516 vecinas).
 - Python 3.10 y 3.11 de verdad (H-55): solo he leído la declaración.
 - El filtro con un universo real: solo con el de ejemplo, donde ningún ticker es una palabra española corriente.

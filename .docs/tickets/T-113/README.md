@@ -5,7 +5,7 @@
 | Estado | CERRADO (QA r02 APTO, 14-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
-| Aprobación del operador | 2026-11-13: «Corrige toda la deuda técnica» (la del Bloque A: T-104, T-107, T-108, T-109 y T-110; T-105 es de A-Forex y B) |
+| Aprobación del operador | 2026-11-13: «Corrige toda la deuda técnica» (la del Bloque A: T-104, T-107, T-108, T-109 y T-110; T-105 es de B) |
 | Deuda técnica | T-104, T-107, T-108, T-109 y T-110 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
 ## Objetivo

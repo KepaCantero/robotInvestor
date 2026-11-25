@@ -68,6 +68,6 @@ Quedan tres bajos, que se corrigen o pasan a la deuda con su ID: **H-07** (CT-10
 
 **Condición de cierre:** `./tools/check_all.sh` 12/12 en el commit.
 
-**Sin comprobar:** el gate entero; `impl_mutantes.py` del implementador (55 mutantes) no lo he vuelto a ejecutar, así que los bloques opcionales de H-04 que los casos de control no traen (historias, decisiones, precios, encuestas…) los he verificado leyendo el diff y por sus pruebas, no con un ataque mío; el `r01_07` completo (los 72 mutantes de T-118), solo los cinco de H-06; las suites de A-Forex y B; datos y modelo reales (fuera del alcance). Tiempos medidos en una máquina compartida con otras dos suites en marcha.
+**Sin comprobar:** el gate entero; `impl_mutantes.py` del implementador (55 mutantes) no lo he vuelto a ejecutar, así que los bloques opcionales de H-04 que los casos de control no traen (historias, decisiones, precios, encuestas…) los he verificado leyendo el diff y por sus pruebas, no con un ataque mío; el `r01_07` completo (los 72 mutantes de T-118), solo los cinco de H-06; la suite de B; datos y modelo reales (fuera del alcance). Tiempos medidos en una máquina compartida con otras dos suites en marcha.
 
 Este revisor no cierra el ticket ni toca la deuda, el diario ni la memoria: lo hace quien encargó la QA.

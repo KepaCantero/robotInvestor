@@ -16,12 +16,7 @@ versión quedó sin bump. Decisión: se deja tal cual pendiente de confirmar con
 propietario de la entrega; no se corrige en silencio porque una versión en el paquete
 instalado (`bloque-a --version` / metadata) diría 1.1.0.
 
-**INC-001, resuelta (17-11-2026, T-167).** Por delegación del operador (`sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §1), `pyproject.toml` y `bloque_a.__version__` pasan a 1.2.0, la versión del README. `tests/test_t167_version.py` comprueba que las tres coinciden. Un entorno ya instalado sigue diciendo 1.1.0 en sus metadatos hasta que se reinstale (`.docs/scripts/preparar_entorno.sh`). INC-002 (A-Forex) sigue abierta: no es del Bloque A.
-
-**INC-002 · 2026-11-03 · Igual patrón en bloque_a_forex.** El README V1.1 del Bloque A
-Forex declara "V1.1" (subcomandos seguimiento/consulta-broker/credencial incluidos, 68
-tests) pero su `pyproject.toml` declara `version = "1.0.0"`. Mismo tratamiento que
-INC-001: documentado, sin corregir en silencio.
+**INC-001, resuelta (17-11-2026, T-167).** Por delegación del operador (`sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §1), `pyproject.toml` y `bloque_a.__version__` pasan a 1.2.0, la versión del README. `tests/test_t167_version.py` comprueba que las tres coinciden. Un entorno ya instalado sigue diciendo 1.1.0 en sus metadatos hasta que se reinstale (`.docs/scripts/preparar_entorno.sh`).
 
 **INC-003 · 2026-11-03 · python-docx es dependencia implícita de bloque_b.**
 `bloque_b/redaccion.py::md_a_docx` genera los .docx con pandoc o, en su defecto,
@@ -968,3 +963,71 @@ Detalle en `.docs/tickets/T-201/`.
 - **Clase del ciclo.** El C6 usa la clase de F3, la misma que el informe pone en `tipo_activo`. La copia de F11 deja de suplirla: un encargo cuya OPP- no está en F3 se salta con su INC- (`f3_seq_clase` None). La clase se comprueba antes de la absorción en C1.
 - **Límite.** Una ficha de F3 que solo lleve `tipo_activo` (el nombre del esquema V3.0, del que `clase` es alias de lectura) se rechaza también, porque el seguimiento solo lee `clase`. El ejecutor escribe siempre los dos. Leer `tipo_activo` como respaldo queda para un ticket aparte, si el operador lo quiere.
 Detalle en `.docs/tickets/T-205/`.
+
+**INC-T204-01 · 2026-11-25 · La Constitución global citaba el Bloque A Forex (T-204) `[RESUELTO en T-204]`.** El operador ordenó eliminar el Bloque A Forex («olvídate del bloque A forex. Elimínalo»). Después amplió la orden a la Constitución («Elimina el bloque A Forex definitivamente»; «Haz esas tres cosas. Te doy mi consentimiento»).
+
+**Lo que pasó antes de aplicarla.** En la r01, el sistema de permisos de la sesión de Claude bloqueó la edición de `sistema_global/constitucion/Constitucion_Global.md`. La orden había llegado por otro agente, y Claude no intentó sortear el bloqueo: dejó la enmienda preparada como parche.
+
+**Qué decía la V0.6.** Mencionaba el A Forex en cinco sitios, todos junto a B Forex:
+- el cambio 17 (§0): «A Forex y B Forex fuera del sistema»;
+- §2: «A Forex y B Forex fueron pruebas y no forman parte del sistema (D-20)»;
+- §14: «A Forex y B Forex quedan fuera (D-20)»;
+- la decisión D-20;
+- P-10, que solo habla de B Forex y no cambió.
+
+**Se aplicó el 25-11-2026** por orden del operador («Todo», tras confirmarle el alcance), con `.docs/tickets/T-204/enmienda4_constitucion.patch`. El nombre del fichero viene de la r01; el parche lo generó `.docs/tickets/T-204/generar_enmienda.py`. Es la **enmienda 6**, y la Constitución pasó a la **V0.7**:
+- Las cuatro primeras menciones quedaron solo con B Forex, cada una anotada «texto reducido por la enmienda 6, D-48», también el cambio 17.
+- Se añadieron el cambio 43 («Qué cambia de la V0.6 a la V0.7») y la decisión D-48, con las palabras del operador.
+- Se añadió la línea de la enmienda 6 al párrafo «Enmiendas» del §15.
+- La fecha de la cabecera pasó al 25-11-2026.
+- Ningún otro bloque cambió.
+
+**Por qué «enmienda 6» (QA r01, H-02).** Los números 4 y 5 ya los usaban dos propuestas pendientes:
+- la enmienda 4, en `.docs/diseno/enmienda_4/`;
+- la enmienda 5, en `.docs/diseno/enmienda_5/propuesta_claude.md` y `.docs/diseno/enmienda_5/propuesta_parte2_claude.md`, que cita «el resto de la enmienda 4».
+
+La enmienda 5 estaba numerada de forma provisional a continuación de la V0.6: V0.7, cambios 43 a 51 y D-48 a D-56 en la parte 1, y cambios 52 a 79 y D-57 a D-84 en la parte 2. La deuda viva ya citaba esa numeración («D-53 propuesta en la enmienda 5», fila T-99).
+
+La enmienda 6 se quedó con lo siguiente del texto ratificado: la V0.7, el cambio 43 y D-48. Como se ratificó antes que la 5, la numeración provisional de la 5 se corre en uno: V0.8, cambios 44 a 80 y D-49 a D-85. Lo prevé su propia regla: «Si la enmienda 4 se ratifica antes, se renumera». Lo mismo vale para las citas de la deuda.
+
+**Comprobado tras aplicarla.** La batería del marco que lee la Constitución (`pruebas/pruebas_parametros_doc_t83.py`) da 109 comprobaciones en verde, y `.docs/scripts/pruebas_marco.sh`, 62 de 62. `test_h02` de `.docs/scripts/pruebas_gate_bloques.py` vigila el contenido: el párrafo «Enmiendas», D-48, las anotaciones y que el A Forex solo aparezca en las líneas de la enmienda 6.
+
+**La fila T-54 de la deuda** conserva la cita de la redacción anterior de D-20 («A Forex y B Forex fuera») y, desde la ronda de cierre (QA r03, H-13), la anota como la Constitución anota D-20: «desde la V0.7, enmienda 6, D-48, D-20 solo nombra B Forex». Detalle en [.docs/tickets/T-204](../.docs/tickets/T-204/analisis-tecnico.md).
+
+**INC-T204-02 · 2026-11-25 · `refs-vivas` y un bloque retirado (T-204) `[PROPUESTO]`.** Una cita a `bloque_a_forex/…` ya no tiene adónde apuntar. El encargo prohíbe meter esas rutas en `tools/refs_allowlist.txt` y pide corregir o marcar el texto que las cita. Decisión: `tools/refs_vivas.py` gana `RETIRADOS = {"bloque_a_forex": "T-204"}`. Una cita al bloque retirado es una ruta muerta salvo en dos casos:
+- **Registros de `.docs/`.** Es una cita en tickets, diario, memoria o diseño, que no se reescriben (regla 1 de `.docs/README.md`).
+- **Línea marcada.** La línea de la cita lleva «T-204».
+
+La regla cubre también la carpeta sola, una cita abreviada con «…», un argumento de una orden y `--opcion=ruta`. Las demás rutas de esa cita se siguen comprobando. Así, `CLAUDE.md`, `prompts/`, `docs/`, las skills, `.docs/README.md` y `.docs/knowledge/` no pueden volver a citar el Forex sin marca. Casos en `.docs/scripts/prueba_refs_vivas.py`, que ahora también ejecuta `pruebas_scripts.sh`.
+
+**INC-T204-03 · 2026-11-25 · Limpieza de `.docs/` (T-204) `[RESUELTO en T-204]`.** La ampliación del operador pedía quitar de `.docs/` lo dedicado al Forex: las filas y frases que solo hablan de él, y entradas enteras si solo eran del Forex.
+
+**Lo que pasó antes de aplicarla.** En la r01, el sistema de permisos de la sesión de Claude bloqueó la escritura. Claude dejó la limpieza preparada en `.docs/tickets/T-204/limpiar_docs.py`, que sin opciones solo dice qué cambiaría.
+
+**Se aplicó el 25-11-2026** por orden del operador («Todo»), con `limpiar_docs.py --aplicar`: 107 líneas en 80 ficheros (12 borradas y 95 reescritas). Coincide con `.docs/tickets/T-204/limpiar_docs_propuesta.txt`. En la r01 eran 18 y unas 280, en 147 ficheros.
+- **Qué había:** ningún ticket tenía el Forex como única pieza, ninguna nota de memoria era solo del Forex y ninguna entrada del diario era solo del Forex.
+- **Lo que conservó:** la evidencia literal. Son las órdenes entre `…` y en bloques de código (ruff con los tres ejecutores, `PYTHONPATH`, búsquedas) y los scripts y logs de `revisores/`. Cambiarlas daría por ejecutado algo que no se ejecutó.
+- **Lo que tampoco tocó (desde la r02; QA r01, H-03):**
+  - las líneas con la marca T-204;
+  - las líneas con resultados de un gate o de una suite: 12/12, «12 de 12», ×3, «passed», cuotas o recuentos de mypy, pytest y ruff, y «doce controles»;
+  - las instrucciones de los encargos a Astra (`.docs/diseno/*/encargo_revision_astra*.md`);
+  - la viñeta del A Forex en la lista de «tres entregas» de la historia;
+  - una frase cuya reescritura recortaría una cita «…».
+- **Tickets llegados con los rebases (cierre de la QA r03, H-14):** T-196, T-201 y T-203 (develop `d11662ff`) y T-205 (`6c8910c1`) se escribieron antes de quitar el Forex y no los cubre la limpieza del 25-11-2026.
+  - **La evidencia se queda.** `limpiar_docs.py` reconoce ahora mypy, pytest y ruff con cualquier mayúscula y el recuento «A-Forex N, B N» o «FX N, B N», así que no reescribe la evidencia de esos tickets: «Pytest: … FX 68, B 176» de T-196 `qa.md` y «T-201 sola), A-Forex 174, B 159» de T-203 `qa.md`.
+  - **Lo que queda por limpiar son 5 líneas:** la fila «| A-Forex, B | sin tocar | sin tocar |» de T-196, T-201, T-203 y T-205 `pruebas.md`, y la enumeración «(A, A-Forex, B, …)» de T-203 `qa.md`. La coordinación decidió aplicarlas («definitivamente»). El sistema de permisos de la sesión de Claude bloqueó `--aplicar`.
+  - **Aplicadas el 25-11-2026** por el coordinador, con la orden del operador («Todo»): las 5 líneas (T-196, T-201, T-203 y T-205 `pruebas.md`, y T-203 `qa.md`) quedan limpias; `limpiar_docs.py` sin opciones da «0 líneas».
+- **Lo que se corrigió después (r03; QA r02, H-11):**
+  - Cuatro líneas de evidencia vuelven a su texto original: dos de T-106 `qa.md`, T-187 `pruebas.md` y T-199 `qa.md`.
+  - En T-166 `pruebas.md` se arregla la concordancia («no se toca»).
+  - La regla de evidencia de `limpiar_docs.py` reconoce ahora también «N/N», «N de N en verde», «pasadas» y «tres suites», «tres ejecutores» y «tres bloques».
+
+Las pruebas de `limpiar()` están en `.docs/scripts/pruebas_gate_bloques.py`.
+
+**INC-T204-04 · 2026-11-25 · Menciones al Forex que se quedan (T-204) `[PROPUESTO]`.** El encargo dice que no se toquen los Bloques A y B, y su corpus está congelado. Se quedan:
+- **Bloque B:** el README de B V2.1 («Normalmente la propuesta procede del Bloque A o del Bloque A Forex» y la auditoría «en los Bloques A y A Forex») y el origen de dos fichas de F8 («Alta nueva de DOC-M (Bloque A Forex)»). Son texto de la entrega, no código, y no hay ningún valor de enumerado del contrato A→B que nombre el Forex: el `origen.tipo` del paquete de B admite `BLOQUE_A` y `LIBRE`. B no tiene código, pruebas ni configuración del Forex, y su línea base sigue en 174.
+- **Bloque A:** `bloque_a/11_Ejecutor/tests/goldens/README.md` («El Bloque A Forex queda para T-115»). T-115 era la réplica de los goldens para el Forex; T-204 quitó su fila de la deuda, así que esa referencia queda colgando hasta que alguien toque los goldens de A (QA r01, H-08).
+- **F9 de B:** `bloque_b/05_Archivos_operativos/Registro de Fuentes para el Analizador de Mercados - V2.0.md` tiene 23 líneas «Origen: … F9 Forex V1.0 …» y las temáticas TFX-04, TFX-05 y TFX-09, que vienen del A Forex. Es texto del corpus congelado, sin enumerado ni código (QA r01, H-08).
+- **Ficheros de A y B que nombran el Forex y se quedan** (la prueba `test_inc_t204_04_cita_todo_lo_que_nombra_el_forex_en_a_y_b` exige que estén aquí): `bloque_a/11_Ejecutor/tests/goldens/README.md`, `bloque_b/README - Índice de la entrega del Bloque B V2.1.md`, `bloque_b/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado de Mercados - V2.0.md` y `bloque_b/05_Archivos_operativos/Registro de Fuentes para el Analizador de Mercados - V2.0.md`.
+- **Divisas:** «Divisas (Forex)» del Documento 0 de A y las fichas FX-… del Catálogo. Son el tipo de activo, no el bloque.
+- **B Forex:** las menciones a B Forex en la Constitución, el cuestionario y el briefing. B Forex es otro bloque y nunca estuvo en el repositorio.

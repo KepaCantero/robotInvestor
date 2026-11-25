@@ -13,5 +13,5 @@
 
 - Archivos cambiados y por qué: `bloque_a/11_Ejecutor/bloque_a/contratos.py` (patrón del IBAN), `bloque_a/evaluador.py` (`lecciones_vigentes`), `config/por_defecto.yaml` (`aprendizaje.lecciones_por_encargo`), `tests/test_t120_r8_y_lecciones.py`.
 - Decisiones tomadas: un solo separador entre grupos (dos espacios seguidos no se detectan: declarado); no se añaden tarjetas ni IBAN de otros países.
-- Límites conocidos: un IBAN partido de otra forma (grupos de dos, saltos de línea, letras intercaladas) no se detecta; el Forex conserva el patrón antiguo.
+- Límites conocidos: un IBAN partido de otra forma (grupos de dos, saltos de línea, letras intercaladas) no se detecta.
 - Comandos exactos para probarlo, desde `bloque_a/11_Ejecutor`: `python -m pytest -q tests/test_t120_r8_y_lecciones.py`.

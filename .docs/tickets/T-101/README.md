@@ -38,7 +38,7 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
   - cambiar el diseño por defecto a la V6, que espera al banco con la API real;
   - mover funciones a I, K o al Orquestador del Broker;
   - contratar el segundo proveedor;
-  - A-Forex y B.
+  - B.
 
 ## Diseño
 

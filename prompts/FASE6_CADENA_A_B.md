@@ -1,7 +1,7 @@
 # PROMPT — Fase 6 · Cadena A→B y conexión a robotTrading
 
 > La única fase que toca la frontera entre bloques y sale del repo. Modelo: el más capaz.
-> Requisito: Fase 5 verificada en bloque_a (y en forex si se quiere la cadena completa).
+> Requisito: Fase 5 verificada en bloque_a.
 
 ---
 

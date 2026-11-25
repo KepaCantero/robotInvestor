@@ -578,7 +578,7 @@ Nota: el documento de evidencias dice «sobre el commit `fb3ccd4`» porque se ge
 
 ### Lo que quedó sin comprobar
 
-- `--ejecutar` completo, el gate entero, A-Forex y B (encargo).
+- `--ejecutar` completo, el gate entero, B (encargo).
 - Mutantes propios para las 18 AUTOMATICA sin cambios desde la r04 (cubiertas por los mutantes de `r03_01` y `r04_mutantes_implementador`).
 
 ## Veredicto (r05)

@@ -93,7 +93,7 @@ Los scripts de ataque están en `revisores/` (`r01_01_enteros_fechas_y_configura
 
 ## Lo que no comprobé
 
-- El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`./tools/check_all.sh`), B (encargo).
 - Otros caminos del ciclo con números o fechas del modelo fuera del bloque `pronostico_fuente` (p. ej., los de Prospectiva), salvo lo que recorre un ciclo simulado.
 - Un F4 manipulado con un nivel de referencia de 400 cifras (`_rentabilidad_serie` usa `math.isfinite` directamente): lo escribe el código, no el modelo, y la cadena de huellas lo detectaría.
 

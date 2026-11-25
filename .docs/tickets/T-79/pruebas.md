@@ -3,7 +3,7 @@
 | Suite | Antes (V0.53) | V0.66 de GLM | Después (V0.67) |
 | --- | --- | --- | --- |
 | Marco común de C (`sistema_global/marco_comun_c`) | 49 baterías | 56 baterías | 56 baterías en verde; `pruebas_consola_sistema.py` pasa de 42 a 46 comprobaciones y `pruebas_integracion_v053.py` gana una |
-| Bloques A, A Forex y B | 201 · 68 · 174 | — | 201 · 68 · 174 (no se tocan) |
+| Bloques A y B | 201 · 174 | — | 201 · 174 (no se tocan) |
 
 ## Criterio de aceptación → prueba
 

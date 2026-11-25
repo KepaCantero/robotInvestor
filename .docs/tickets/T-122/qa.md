@@ -71,4 +71,4 @@ Quedan dos bajos para la deuda: **H-13** (el tope 10 de lecciones escrito en el 
 
 **Condición de cierre:** `./tools/check_all.sh` 12/12 en el commit.
 
-**Sin comprobar:** el gate entero; los demás scripts de la QA r02 de T-113 (`r02_01`, `r02_05`) y de la r01 (`r01_13`); las suites de A-Forex y B.
+**Sin comprobar:** el gate entero; los demás scripts de la QA r02 de T-113 (`r02_01`, `r02_05`) y de la r01 (`r01_13`); la suite de B.

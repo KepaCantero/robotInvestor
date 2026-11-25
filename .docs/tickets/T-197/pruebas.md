@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Bloque A (`pytest -q bloque_a/11_Ejecutor`, recogidas) | 8361 | 8379 (+18 de `tests/test_t197_periodicidad.py`) |
 | Bloque A, ejecución completa (en el gate, r01) | — | 8377 superadas y 2 omitidas de 8379 recogidas, sin fallos. Las 2 omitidas son `test_t149.py::test_h01_series_distintas_en_otras_rejillas_no_son_copias` (`pytest.skip`, límite declarado de T-149), las mismas que omite develop |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 La línea base de A (607) se respeta con holgura. Todas las pruebas con la configuración por defecto (`config_pruebas()`, que solo activa los doce perfiles y baja el bootstrap); la de integración, solo con DIV para que el ciclo real sea corto.
 

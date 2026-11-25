@@ -26,6 +26,13 @@ QA r02 de T-65 (H-15), en una orden:
   también con `=`) es un archivo que la orden va a crear: no se comprueba.
 Cualquier otro archivo que aún no existe y se cita a propósito (una salida futura
 fuera de una orden, un entregable de una fase) va en `tools/refs_allowlist.txt`.
+T-204 (orden del operador del 25-11-2026): un bloque eliminado del repositorio (`RETIRADOS`)
+no vuelve a la lista de permitidas. Una cita suya (también la carpeta sola, o abreviada
+con «…») es una ruta muerta salvo en dos casos:
+- en los registros de `.docs/` (tickets, diario, memoria y diseño), que no se reescriben
+  (regla 1 de `.docs/README.md`);
+- en una línea que la marca con el ticket que retiró el bloque (p. ej. «eliminado el
+  25-11-2026, T-204»).
 La prueba está en `.docs/scripts/prueba_refs_vivas.py`.
 """
 import re
@@ -34,9 +41,13 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
+RAICES_VALIDAS = ("bloque_a/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
                   ".docs/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")
-BLOQUES = ("bloque_a", "bloque_a_forex", "bloque_b")
+BLOQUES = ("bloque_a", "bloque_b")
+# Bloques eliminados del repositorio → el ticket que los retiró, que es también la marca que acepta una cita suya.
+RETIRADOS = {"bloque_a_forex": "T-204"}
+# Registros de .docs/ que no se reescriben: una cita a un bloque retirado se queda como estaba.
+REGISTROS = (".docs/tickets/", ".docs/diario/", ".docs/memoria/", ".docs/diseno/")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
 PAT_LINEAS = re.compile(r":\d+(?:-\d+)?$")
 # Intérpretes (con o sin ruta y versión: python3, python3.12, .venv/bin/python3, bash, sh) y lanzadores de pruebas
@@ -45,6 +56,7 @@ RE_LANZADOR = re.compile(r"(?:[\w./-]*/)?pytest")
 OPCIONES_SALIDA = ("-o", "--salida", "--output", "--out")
 COMODINES = ("*", "?", "[")
 OPCIONES_CON_VALOR = ("-X", "-W")
+RE_ASIGNACION = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
 
 def documentos(raiz: Path) -> list[Path]:
@@ -129,14 +141,48 @@ def existe(raiz: Path, r: str) -> bool:
     return primero in BLOQUES and (raiz / primero / "11_Ejecutor" / r).exists()
 
 
+def marcada(linea: str, marca: str) -> bool:
+    """La línea lleva la marca como palabra: «T-204», no «T-2040» ni «XT-204» (QA r01 de T-204, H-06)."""
+    return re.search(rf"(?<![\w-]){re.escape(marca)}(?!\d)", linea) is not None
+
+
+def bloque_retirado(cita: str) -> str | None:
+    """El bloque retirado que nombra una cita, o None: la cita entera o cualquiera de sus palabras (una orden con
+    argumentos, `--opcion=ruta`), con o sin `./`, comillas o sufijo de líneas."""
+    try:
+        partes = shlex.split(cita)
+    except ValueError:                       # comillas sin cerrar: se parte por espacios
+        partes = cita.split()
+    for r in [cita.strip()] + partes:
+        r = r.strip().strip("'\"")
+        # `--opcion=ruta` o `NOMBRE=ruta` (una asignación de entorno): la ruta es lo que sigue al «=» (QA r01 y r02 de T-204,
+        # H-06 y H-12); un nombre de archivo con «=» (`bloque_a_forex/a=b.md`) no se parte
+        if r.startswith("-") or RE_ASIGNACION.match(r):
+            r = r.split("=", 1)[-1]
+        r = PAT_LINEAS.sub("", r)
+        primero = r.removeprefix("./").split("/", 1)[0]
+        if primero in RETIRADOS:
+            return primero
+    return None
+
+
 def comprobar(raiz: Path) -> list[str]:
     plan = planificados(raiz)
     rotas = []
     for doc in documentos(raiz):
         if not doc.exists():
             continue
-        for m in PAT_RUTA.finditer(doc.read_text(encoding="utf-8")):
+        rel = doc.relative_to(raiz).as_posix()
+        texto = doc.read_text(encoding="utf-8")
+        for m in PAT_RUTA.finditer(texto):
             bruta = m.group(1).strip()
+            retirado = bloque_retirado(bruta)
+            if retirado is not None:          # T-204: antes que cualquier otro filtro (también «…» o una carpeta sola)
+                fin = texto.find("\n", m.end())
+                linea = texto[texto.rfind("\n", 0, m.start()) + 1:fin if fin != -1 else len(texto)]
+                if not rel.startswith(REGISTROS) and not marcada(linea, RETIRADOS[retirado]):
+                    rotas.append(f"{rel} cita el bloque retirado {retirado} ({RETIRADOS[retirado]}) sin marcarlo: {bruta}")
+            # Las demás rutas de la cita se comprueban como siempre; las del bloque retirado ya no son de una raíz válida.
             # Abreviaturas (…), placeholders (<bloque>, T-NN, AAAA-MM) y referencias a símbolos (::)
             # no son rutas verificables.
             if "…" in bruta or "<" in bruta or ">" in bruta or "::" in bruta or "T-NN" in bruta or "AAAA" in bruta:

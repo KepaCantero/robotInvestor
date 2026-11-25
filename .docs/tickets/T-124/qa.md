@@ -44,4 +44,4 @@
 
 **APTO.** Los tres criterios se cumplen con evidencia ejecutada: ningún mutante vivo de los 20 de la mensajería, K01 a K03 detectados y los goldens coinciden sin cambios de producción. El re-congelado solo cambia lo que dice su motivo: con el código de antes de este commit los goldens nuevos coinciden, así que no esconde ninguna regresión del ejecutor. Quedan tres hallazgos bajos (el informe de pruebas sin rellenar, el README de los goldens desfasado y el límite de las claves genéricas sin declarar) que pasan a la deuda con su ID.
 
-**Sin comprobar:** el gate entero (pasó en el commit); los goldens del Bloque A Forex (T-115).
+**Sin comprobar:** el gate entero (pasó en el commit).

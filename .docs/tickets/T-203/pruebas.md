@@ -6,7 +6,7 @@ Lo de arriba hasta «Ronda de cierre» es la r01 (sobre develop 7f92064a, sin T-
 | --- | --- | --- |
 | Bloque A (`pytest -q bloque_a/11_Ejecutor`, recogidas) | 8439 | 8444 (+5 de `tests/test_t203_cuotas.py`) |
 | Bloque A, ejecución completa (dentro del gate) | — | 8442 superadas, ningún fallo (las 2 que faltan hasta 8444 son omisiones, como en develop) |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 ## Criterio de aceptación → prueba
 

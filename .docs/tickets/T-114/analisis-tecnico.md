@@ -32,7 +32,6 @@ Los formatos de los contratos CT del Bloque A vivían solo en el código (`bloqu
   - El ciclo simulado emite 8 de los 25 contratos por la mensajería (CT-02, 05, 06, 08, 11, 12, 13 y 15). De los demás se congelan las tablas y el mensaje de ejemplo, no una forma observada.
   - Los retornos internos (CT-06 a CT-14) no pasan por `Mensajeria`: su formato real lo fijan los esquemas de `ESQUEMAS`, congelados en `esquemas_respuestas.json`.
   - CT-16 a CT-22 no tienen cuerpo congelado: el Anexo B no da sus campos.
-  - El Bloque A Forex queda para T-115.
 - Comandos exactos para probarlo, desde `bloque_a/11_Ejecutor` y con el `.venv` del proyecto:
   - `python -m pytest -q tests/test_fase3_goldens.py` (51 pruebas, unos 20 s);
   - `python tests/goldens_ct.py` (comprueba; 0 si coincide, 1 si difiere);
@@ -122,7 +121,6 @@ Son los de «Límites» de `bloque_a/11_Ejecutor/tests/goldens/README.md`. Susti
 - **Reglas fuera de la mensajería** (`Bloque.decision`, `Credenciales.responder`, `ConsultasBroker.enviar`) y **los patrones del detector de datos protegidos**: tienen sus pruebas propias.
 - **La batería es amplia, no exhaustiva:** una regla nueva que solo afecte a un mensaje que ningún caso construye no cambia el golden.
 - **Los esquemas derivados** llegan al primer nivel, y a un segundo donde el Anexo B trae un bloque JSON. No fijan tipos. No juzgan un retorno RECHAZADO o SIN_RESULTADO.
-- El Bloque A Forex queda para T-115.
 
 ### Comandos
 

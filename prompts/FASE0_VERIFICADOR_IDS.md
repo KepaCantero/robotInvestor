@@ -30,7 +30,7 @@ Entregables:
 
 Restricciones:
 - No modificas ningún .md del corpus (son canónicos; los .docx ni tocarlos).
-- No toques `bloque_a_forex/` ni `bloque_b/`.
+- No toques `bloque_b/`.
 - Ninguna decisión de resolución del skew se aplica en esta fase: cada una se documenta en `docs/incidencias.md` con su porqué.
 - Commit con prefijo `fase0:`. Avance registrado en `docs/AVANCE.md`.
 

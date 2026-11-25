@@ -26,7 +26,6 @@ Precisión de la ronda r02 (QA r01, H-01): «un cambio de formato» es un cambio
 - No entra:
   - cambiar código de producción (`bloque_a/11_Ejecutor/bloque_a/`): si el ejecutor y el Anexo B no coinciden, se congela la diferencia y se registra; no se corrige en silencio (regla 7);
   - tocar el corpus congelado (Documento 0, `06_Plantillas_entregables`): los esquemas derivados viven con las pruebas, no en la entrega;
-  - el Bloque A Forex (regla 8): su réplica es T-115;
   - los campos de CT-16 a CT-21: el Anexo B los remite a los prompts de sistema, que son datos de ejecución (regla 1). De ellos se congela el canal, el sobre común y, de los que el ejecutor emite, la forma. De CT-22 el Anexo B solo nombra `tipo` (r02, H-02).
 
 ## Diseño
@@ -116,7 +115,7 @@ Regla de re-congelado (va en el `README.md` de los goldens): solo deliberado, co
 - 2026-11-13 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-13 · PLANIFICADO · claude · plan escrito por orden del operador («planifica y ejecuta la fase 3»); se trabaja en una copia aparte mientras corre la QA r02 de T-112
 - 2026-11-13 · EN CURSO · claude · implementado en la copia aparte: 51 pruebas del módulo en verde, mutación a mano comprobada, gates ligeros en verde; faltan la suite completa del Bloque A y el gate 12/12, que esperan a que termine la QA r02 de T-112 (una cosa cada vez)
-- 2026-11-13 · EN CURSO · claude · decisiones del operador: en INC-T114-01 manda el código del Bloque A (el Documento 0 se escribió antes de construirlo y se modificará); T-115 (Forex) aplazada, no se hace sin orden
+- 2026-11-13 · EN CURSO · claude · decisiones del operador: en INC-T114-01 manda el código del Bloque A (el Documento 0 se escribió antes de construirlo y se modificará), no se hace sin orden
 - 2026-11-13 · EN QA · claude · informe de pruebas escrito; pendiente la QA
 - 2026-11-14 · NO APTO · revisor (QA r01) · dos hallazgos altos: H-01 (20 cambios de formato a la vez no hacen fallar ningún golden: las reglas de valor de la mensajería y los cuerpos que el ciclo semanal no emite quedaban sin congelar) y H-02 (falta la diferencia de `tipo` de CT-22 entre el Anexo B y el ejecutor); H-03 media (deuda sin actualizar) y H-04 a H-06 bajas. Detalle en `qa.md`
 - 2026-11-14 · EN QA · claude · ronda r02: batería de aceptaciones y rechazos (golden nuevo), once flujos simulados con rutas anidadas y tipos, CT-22 con su campo del Anexo B y su diferencia medida, `contenido` de CT-23 con condición, prueba «nada inventado» por párrafo, CA-5 reescrito. Detalle en «Ronda r02» de `analisis-tecnico.md`. H-03 (deuda) lo actualiza quien coordina; pendientes el gate 12/12 y la QA r02

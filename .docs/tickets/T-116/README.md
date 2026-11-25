@@ -23,7 +23,7 @@ Ejecutar el Plan de pruebas V3.0 del Bloque A (PB-01 a PB-67) con el cliente sim
 - No entra:
   - las pruebas que exigen la API real: quedan «Pendiente API» con su motivo (regla 4 y prompt de la fase);
   - corregir el ejecutor: un fallo del plan es una incidencia en `docs/incidencias.md`, no un arreglo en silencio;
-  - los bloques A Forex y B (un bloque por sesión; el Forex, además, no se integra: decisión del 13-11-2026);
+  - el Bloque B (un bloque por sesión);
   - reescribir `tests/MAPA_PLAN_DE_PRUEBAS.md`, el mapa del 3-11-2026: se conserva y se le añade un aviso que remite al nuevo.
 
 ## Diseño

@@ -3,9 +3,9 @@
 conformance goldens de robotTrading: el corpus .md/.docx/esquemas es la fuente
 de verdad y no puede cambiar sin un re-congelado deliberado).
 
-Alcance del manifiesto: todo lo entregado en bloque_a/, bloque_a_forex/ y
-bloque_b/ EXCEPTO sus 11_Ejecutor (el código evoluciona en las fases) y los
-directorios de ejecución; más los README de la raíz del repo.
+Alcance del manifiesto: todo lo entregado en bloque_a/ y bloque_b/ EXCEPTO sus
+11_Ejecutor (el código evoluciona en las fases) y los directorios de ejecución;
+más los README de la raíz del repo.
 
 Uso:
   python tools/corpus_integridad.py            # verificar (exit 1 si diverge)
@@ -27,7 +27,7 @@ def es_corpus(ruta: Path) -> bool:
     rel = ruta.relative_to(RAIZ)
     if any(p in EXCLUIR_PARTES for p in rel.parts):
         return False
-    if rel.parts[0] in ("bloque_a", "bloque_a_forex", "bloque_b"):
+    if rel.parts[0] in ("bloque_a", "bloque_b"):
         # El ejecutor es código vivo: fuera del congelado
         return "11_Ejecutor" not in rel.parts
     return str(rel) in README_RAIZ

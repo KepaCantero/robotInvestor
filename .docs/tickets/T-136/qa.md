@@ -81,7 +81,7 @@ Los scripts de ataque están en `revisores/` (`r01_01_iban_tarjetas_formas.py`, 
 
 ## Lo que no comprobé
 
-- El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`./tools/check_all.sh`), B (encargo).
 - El registro de IBAN de SWIFT descargado ni la página de precios ni la de la herramienta de búsqueda: comparé con lo que sé de ellos, sin red.
 - El margen de 1,35: supone que los 3,6 caracteres por token del simulador equivalen al tokenizador anterior; para un texto en español con JSON, cifras e identificadores puede haber menos caracteres por token. Solo se mide con `count_tokens`, que pide clave (no lo usé: sin llamadas a la API).
 - Si las búsquedas hechas desde el filtrado dinámico de la herramienta cuentan para `max_uses` (la QA de T-129 lo señalaba): no lo verifiqué.

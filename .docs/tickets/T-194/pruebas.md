@@ -10,7 +10,7 @@ Estado tras la ronda r02 (QA r01 NO APTO). Las cifras de rondas anteriores está
 | `.docs/tickets/T-194/mutantes.py` | — | 49 de 49 muertos |
 | `revisores/r01_aislamiento.sh`, `r01_ruta_no_ascii.py` y `r01_mutantes_revisor.py` | — | en verde (rc 0) |
 | `.venv/bin/ruff check` de los ficheros tocados | 0 en el `pruebas_cola_astra.py` viejo | 0 en `pruebas_cola_astra.py`, `pruebas_autor_generico.py`, `cola_astra.py` y `mutantes.py` |
-| Bloques A, A-Forex, B | sin tocar | sin tocar |
+| Bloques A, B | sin tocar | sin tocar |
 
 ## Criterio de aceptación → prueba
 

@@ -121,7 +121,7 @@ Los scripts de ataque están en `revisores/` (`r02_01_ventana_del_ciclo_y_borrad
 | mypy de A, como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
 | Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | los cuatro en verde (corpus: 695 archivos coinciden) |
 
-No lancé `./tools/check_all.sh`, ni A-Forex ni B (encargo).
+No lancé `./tools/check_all.sh`, ni B (encargo).
 
 ## Veredicto (r02)
 

@@ -24,7 +24,7 @@ Entorno: `.venv` del proyecto (Python 3.12), máquina de 4 núcleos compartida c
 | `tests/test_t113_deuda.py` | 57 | 106 (49 nuevas, todas `test_r02_*`), 43 s |
 | Suite completa de `bloque_a/11_Ejecutor` | 3825 (3874 menos las 49 nuevas; no medido aparte en esta rama) | **3874 en verde**, 1043 s (17 min 23 s, con otro trabajo en la máquina); línea base 607 |
 
-La suite completa incluye `test_t102_filtro.py`, `test_t101_v6.py`, `test_t88_consumo.py`, `test_t106_*.py`, `test_unitarias.py` y `test_fase3_goldens.py`. Las suites de A-Forex y de B no se han ejecutado: la ronda no toca esos paquetes.
+La suite completa incluye `test_t102_filtro.py`, `test_t101_v6.py`, `test_t88_consumo.py`, `test_t106_*.py`, `test_unitarias.py` y `test_fase3_goldens.py`. Las suites de B no se han ejecutado: la ronda no toca esos paquetes.
 
 ### Criterio de aceptación → prueba
 
@@ -76,7 +76,7 @@ python tools/nfc_check.py           # nombres en forma canónica
 
 ### Sin comprobar
 
-- El gate completo y las suites de A-Forex y B.
+- El gate completo y la suite de B.
 - H-04 (se comprueba en T-118).
 - Que los tres `_hash` del RUN que cambian entre la r01 y la r02 se deban solo a los tiempos de ejecución: es lo esperable (la QA r01 ya los daba por explicados), pero no se ha aislado.
 - La API real y un universo real.

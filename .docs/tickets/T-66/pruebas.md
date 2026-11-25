@@ -3,7 +3,7 @@
 | Suite | Antes | Después |
 | --- | --- | --- |
 | Bloque A (`bloque_a/11_Ejecutor/tests`) | 117 | 201 (`test_t66_propuestas.py`: 62, 29 de la QA · `test_t66_evaluacion.py`: 22) |
-| Bloque A Forex y Bloque B | 68 · 141 | 68 · 141 (no se tocan) |
+| Bloque B | 141 | 141 (no se toca) |
 
 ## Criterio de aceptación → prueba
 

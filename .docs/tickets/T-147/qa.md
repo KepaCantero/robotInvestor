@@ -44,7 +44,7 @@ Observaciones (no son hallazgos de este ticket):
 
 Scripts de esta ronda, en `revisores/` (órdenes en los hallazgos): `r01_01_r8_y_peticion.py`, `r01_02_bce_y_clases.py`, `r01_03_mutantes_qa.py` (mutantes propios de T-147, T-144 y T-148).
 
-No comprobado: los revisores de T-141 que necesitan red (`r01_contraste_fred.py`, `r02_festivos_y_huecos.py`); `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo).
+No comprobado: los revisores de T-141 que necesitan red (`r01_contraste_fred.py`, `r02_festivos_y_huecos.py`); `./tools/check_all.sh` entero, B (fuera del encargo).
 
 ## Veredicto
 

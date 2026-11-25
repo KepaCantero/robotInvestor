@@ -182,7 +182,7 @@ Tres escenarios (backtest de RV, dos ciclos en vivo de RV y el ciclo de las doce
 
 ### Lo que no comprobé
 
-- El gate completo (`check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`check_all.sh`), B (encargo).
 - Que el Buscador use la FUE- y recalifique F9 (modelo real).
 - El esquema de las respuestas de los agentes (`contratos.py`) no declara `pronostico_fuente`; no lo he cambiado ni medido más allá de que lo deja pasar.
 
@@ -315,7 +315,7 @@ Resumen: 10 de 16 muertos; de los 6 vivos, 3 equivalentes (M08, M10, M16), 1 con
 
 ### Lo que no comprobé
 
-- El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`./tools/check_all.sh`), B (encargo).
 - Que el Buscador use la FUE- y recalifique F9 (modelo real), ni una respuesta real del modelo con un número enorme: lo reproduje con el cliente simulado parcheado, sobre el mismo camino (`json.loads` sin `parse_int` en `agentes.py` lo permite).
 - Otros caminos del ciclo con enteros enormes fuera de T-125.
 

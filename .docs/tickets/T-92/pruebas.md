@@ -24,7 +24,6 @@
 
 - Gate completo, `.docs/scripts/gate.sh --completo`: 12/12, con el código de la copia en `PYTHONPATH` (el entorno tiene los bloques instalados en modo editable desde la copia principal):
   - A: 386 pruebas (eran 326);
-  - A-Forex: 68;
   - B: 176.
 - Cuotas que bajan: ruff de 3109 a 3077 y mypy de A de 123 a 115. Línea base de A: 386.
 - Las 43 pruebas de Astra (`tests/test_t87_*.py`) pasan sobre develop. Tres se han ajustado a reglas de develop, cada una con su motivo:

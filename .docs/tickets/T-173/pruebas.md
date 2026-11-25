@@ -5,7 +5,7 @@
 | Bloque A (`pytest -q bloque_a/11_Ejecutor`, recogidas) | 7 975 | 7 991 (+16 de `tests/test_t173.py`): 7 988 superadas, 2 omitidas y 1 que pasa al regenerar las evidencias (ver «Gate») |
 | `tests/test_t173.py` | — | 16 superadas |
 | Línea base del gate (A ≥ 607) | cumple | cumple |
-| A-Forex, B | sin tocar | sin tocar (no se ejecutan: ningún archivo de esos bloques cambia) |
+| B | sin tocar | sin tocar (no se ejecutan: ningún archivo de esos bloques cambia) |
 
 ## Criterio de aceptación → prueba
 

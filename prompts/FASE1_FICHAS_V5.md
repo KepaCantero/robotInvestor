@@ -22,6 +22,6 @@ Reglas de la fase:
 
 Entregables: fichas implementadas con sus tests; `pytest -q bloque_a/11_Ejecutor` termina con MÁS de 58 pasando y CERO fallos; tabla en docs/AVANCE.md con ficha → estado.
 
-Restricciones fijas: no modificas ningún .md del corpus; no tocas bloque_a_forex/ ni bloque_b/; nada en silencio; commits `fase1:`.
+Restricciones fijas: no modificas ningún .md del corpus; no tocas bloque_b/; nada en silencio; commits `fase1:`.
 
 Criterio de éxito: lanzo `pytest -q bloque_a/11_Ejecutor` y el verificador de la Fase 0 ya no clasifica como SOLO_CATALOGO las fichas de esta fase.

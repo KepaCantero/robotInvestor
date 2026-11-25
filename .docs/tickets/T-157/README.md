@@ -32,7 +32,7 @@ tal cual, es `prompts/FASE0_VERIFICADOR_IDS.md`; las notas de la sesión coordin
 - No entra:
   - Ningún `.md` ni `.docx` del corpus (canónicos); ni `99_Historico*` (no se lee ni se escanea).
   - Resolver ningún desfase: las decisiones solo se proponen.
-  - `bloque_a_forex/`, `bloque_b/`, la deuda técnica, el Documento 0, los goldens, `tests/test_fase3_goldens.py`, `llm.py`,
+  - `bloque_b/`, la deuda técnica, el Documento 0, los goldens, `tests/test_fase3_goldens.py`, `llm.py`,
     `consumo.py`, `orquestacion.py`, `cadena_b.py` y `motor/frontera_b.py` (otras tareas).
 
 ## Diseño

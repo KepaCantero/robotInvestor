@@ -28,7 +28,7 @@ Publicar la V5.2 del Documento 0 del Bloque A: la V5.1 con el Anexo B corregido 
   - nada del Documento 0 fuera del Anexo B, salvo la cabecera de versión y la fila del Anexo F; en particular, los §7.6 y §7.9 (CT-22, «tipo») no se tocan: el Anexo B dice qué campo lleva cada valor;
   - el ejemplo publicado del informe de seguimiento (INC-T114-02): vive en `06_Plantillas_entregables`, no en el Documento 0;
   - los system prompts (`02_System_prompts`) y el resto del corpus que cita «Documento 0 óptima V5.1»: son datos congelados;
-  - `bloque_a_forex/`, `bloque_b/` (también su Documento 0, que cita «Documento 0 del Bloque A V5.1»), `sistema_global/marco_comun_c/`, la Constitución y la fila T-143 de la deuda;
+  - `bloque_b/` (también su Documento 0, que cita «Documento 0 del Bloque A V5.1»), `sistema_global/marco_comun_c/`, la Constitución y la fila T-143 de la deuda;
   - generar un `.docx` de la V5.2.
 
 ## Diseño

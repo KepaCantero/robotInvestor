@@ -36,7 +36,7 @@
 - `corpus_integridad.py`, `nfc_check.py`, `secrets_scan.py`, `refs_vivas.py`, los tres `por_defecto.yaml` parsean: en verde.
 - `evidencias_plan_a.py` (comprobación): el mapa no cambia (67 pruebas del plan, 211 citadas, todas existen); no hace falta regenerar las evidencias.
 - `.docs/scripts/borrador_anexo_b.py --comprobar`: 0.
-- No se pasa `check_all.sh` completo: la suite de A-Forex y la de B no se tocan (otro bloque) y hay otros agentes con carga en la máquina; los gates de este ticket se pasaron uno a uno.
+- No se pasa `check_all.sh` completo: la suite de B no se toca (otro bloque) y hay otros agentes con carga en la máquina; los gates de este ticket se pasaron uno a uno.
 
 ## Ronda r02 (QA r01 NO APTO, H-01 a H-06)
 

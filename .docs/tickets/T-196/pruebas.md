@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | `tests/test_t196.py` | — | 41 (14 funciones más los casos de los `parametrize`) |
 | Bloque A completo (gate) | — | 8400 passed |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 ## Criterio de aceptación → prueba
 

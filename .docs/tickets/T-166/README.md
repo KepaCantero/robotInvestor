@@ -32,7 +32,7 @@ Publicar una entrega del corpus del Bloque A que corrija lo que el verificador d
   - otros textos del corpus con «V4.0» que no son el Catálogo (cabeceras «Bloque A V4.0», «Mapa de conocimientos V4.0», Anexo G);
   - renombrar los prompts: su nombre «Versión óptima V5.0» es el del diseño del agente; el ejecutor los busca por nombre de agente y registra la huella del texto (`Prompts.version`);
   - `CLAUDE.md` (dice 696 archivos y la trampa «Catálogo V4.0»): solo lo cambia el operador en su sesión; se deja el texto propuesto en el análisis técnico para la sesión coordinadora;
-  - `bloque_a_forex/`, `bloque_b/`, `sistema_global/marco_comun_c/`, la Constitución y la fila T-166 de la deuda;
+  - `bloque_b/`, `sistema_global/marco_comun_c/`, la Constitución y la fila T-166 de la deuda;
   - generar `.docx`.
 
 ## Diseño

@@ -70,7 +70,7 @@ No se lanzó `./tools/check_all.sh` ni la suite completa de A (por instrucción)
 | ruff de los tres ejecutores desde la raíz (`ruff check --output-format=concise … \| wc -l`) | **2902** (cuota 2902; sin cambios) |
 | mypy de A como el gate (`cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l`) | **109** (cuota 109); ninguna línea de los cuatro módulos tocados |
 | `tools/refs_vivas.py`, `tools/secrets_scan.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (corpus 695) |
-| A-Forex y B | no tocados, no lanzados |
+| B | no tocados, no lanzados |
 
 ## Comandos
 

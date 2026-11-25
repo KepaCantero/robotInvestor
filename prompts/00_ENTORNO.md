@@ -11,12 +11,12 @@ ENTORNO — deja el repo listo para implementar y verifica cada punto con un com
 1. Python y venv:
    - `~/.local/bin/python3.12 --version` debe existir. Si no existe: PARA y díselo al propietario; no instales Python por tu cuenta.
    - El venv del repo es `.venv/`. Créalo e instálalo SOLO con `.docs/scripts/preparar_entorno.sh` (T-96): usa las versiones
-     fijadas de `tools/requisitos_entorno.txt`, instala los tres ejecutores, los opcionales de tests y las herramientas de
+     fijadas de `tools/requisitos_entorno.txt`, instala los dos ejecutores, los opcionales de tests y las herramientas de
      calidad, y comprueba lo instalado. Nunca `pip install` sin versión: así es como `arch` 9.0.0 rompió las cuotas de mypy.
      Si el script dice que el `.venv` está a medias o es de otro Python, bórralo (`rm -rf .venv`) y vuelve a ejecutarlo.
      `.docs/scripts/preparar_entorno.sh --comprobar` solo compara lo instalado con el fichero.
    - El pre-commit es opcional y va fuera del entorno fijado (no lo usa el gate): `pipx install pre-commit` y `pre-commit install`.
-   - El gate del repo es `./tools/check_all.sh`: debe terminar **12/12 en verde**. Anota los números REALES obtenidos.
+   - El gate del repo es `./tools/check_all.sh`: debe terminar **10/10 en verde**. Anota los números REALES obtenidos.
    - Nota conocida: sin `python-docx`, bloque_b falla 3 tests (el .docx del mapa de eslabones degrada con elegancia) — es la incidencia INC-003, no un bug tuyo.
 
 2. MCPs (con `claude mcp list`):
@@ -30,4 +30,4 @@ ENTORNO — deja el repo listo para implementar y verifica cada punto con un com
 
 4. Registra en `docs/AVANCE.md` una línea «entorno verificado» con fecha y los números de tests reales obtenidos. Si cambiaste algo, commit con prefijo `infra:`.
 
-Criterio de éxito: las tres suites en verde con los números anotados, `claude mcp list` muestra context7 operativo, y push OK.
+Criterio de éxito: las dos suites en verde con los números anotados, `claude mcp list` muestra context7 operativo, y push OK.

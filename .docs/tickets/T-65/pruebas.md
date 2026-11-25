@@ -7,7 +7,7 @@
 | `.docs/tickets/T-65/mutaciones.py` | — | 39/39 mutaciones detectadas |
 | ruff (tres ejecutores) | 3102 (cuota 3109) | 3083 |
 | mypy `bloque_a` | 123 (cuota 123) | 123 |
-| `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
+| `bloque_b` | 174 | sin tocar (en el gate) |
 
 ### Tras la QA r04 (ronda reabierta por el operador)
 

@@ -15,7 +15,7 @@ Cerrar INC-001: el README del ejecutor declara «ejecutor V1.2» desde la V5.1, 
 ## Alcance
 
 - **Entra:** `version` de `pyproject.toml` y `__version__` del paquete a 1.2.0; una prueba que ata los dos al título del README; la nota de resolución en INC-001; la trampa de `CLAUDE.md`.
-- **No entra:** A-Forex (INC-002), que no es del Bloque A; reinstalar el paquete en los entornos ya creados.
+- **No entra:** reinstalar el paquete en los entornos ya creados.
 
 ## Diseño
 

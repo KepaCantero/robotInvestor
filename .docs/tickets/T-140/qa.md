@@ -75,7 +75,7 @@
 
 ## Lo que no comprobé
 
-- El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+- El gate completo (`./tools/check_all.sh`), B (encargo).
 - Los precios, la página de la herramienta de búsqueda y si un `messages.create` que vence por `timeout_s` y el SDK reintenta se cobra (el estimador lo deja fuera como «reintentos del SDK por errores de red»; un tiempo agotado no es un error de red).
 - Una cota rigurosa con el presupuesto UC (H-01): mi script 2 recorre un solo camino del peor caso, no el máximo sobre todos los órdenes posibles.
 - Los tokens del mensaje de errores de una reparación (hasta 15 errores de 300 caracteres): la cota no los cuenta; los absorbe el margen de 1,35 de la entrada, que está pensado para el tokenizador.

@@ -21,7 +21,7 @@
 | `contraste_cota.py` (div) | ningún encargo alargado pasa del supuesto S4 |
 | `mutantes_t145.py` (copia desechable `qa18_mut_impl`) | **19 de 19 muertos** |
 | `borrador_anexo_b.py --comprobar` | 0 (el borrador coincide con lo que genera) |
-| `./tools/check_all.sh`, A-Forex, B | no lanzados (instrucción del encargo) |
+| `./tools/check_all.sh`, B | no lanzados (instrucción del encargo) |
 
 ## Recuento de llamadas de un ciclo C1 (código leído, no el script)
 

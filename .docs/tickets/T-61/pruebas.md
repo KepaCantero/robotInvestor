@@ -28,7 +28,7 @@ Para comprobar el marco global se usó una copia temporal de sistema_global/marc
 ## Resultados finales · 9 de noviembre de 2026
 
 - Control oficial en la copia temporal de la integración: 12 ejecutados, 12 pasaron, 0 omitidos. Corpus de 695 archivos íntegro.
-- A: 58 pruebas. A Forex: 68. B: 133 frente a 118 en la misma base antes del traslado.
+- A: 58 pruebas. B: 133 frente a 118 en la misma base antes del traslado.
 - Segunda ejecución sobre el ejecutor B del clon de destino: 133 pasaron, 0 omitidas. Hubo 65 avisos de obsolescencia de NumPy en una prueba anterior al cambio; también estaban en la ejecución inicial.
 - Cuotas medidas por el controlador del repositorio: Ruff 3488; mypy A 135, Forex 174, B 159.
 - En los ejemplos se usó solo el cliente simulado, sin credenciales ni consultas externas. No se incluyeron datos BCE.

@@ -88,7 +88,7 @@ Todos con `.venv/bin/python -W ignore .docs/tickets/T-119/revisores/<script>` de
 
 Lo demás está bien: las diez fichas coinciden con oráculos propios en datos no degenerados (385 comprobaciones, una sola discrepancia, de texto), los 33 casos de control se sirven, quedan en RC y se re-ejecutan con SI, 35 659 llamadas hostiles sin una cifra no finita ni una excepción de las fichas, todas las cotas funcionan y el servicio más caro termina en menos de un minuto, la fecha de corte se aplica campo a campo, el Catálogo se reproduce byte a byte y el corpus está íntegro.
 
-**Sin comprobar:** el gate completo `check_all.sh` y las suites de A-Forex y B (no se lanzaron); la regresión del ciclo simulado de `CLAUDE.md` (T-119 no toca el ciclo); los casos de control de las 70 fichas anteriores aparte de la suite; los mutantes Q28 y Q83 (no aplicados); `test_t119_p2.py` y `test_t119_motor.py` no se leyeron enteros; el hostil solo sustituye tres elementos por lista.
+**Sin comprobar:** el gate completo `check_all.sh` y la suite de B (no se lanzaron); la regresión del ciclo simulado de `CLAUDE.md` (T-119 no toca el ciclo); los casos de control de las 70 fichas anteriores aparte de la suite; los mutantes Q28 y Q83 (no aplicados); `test_t119_p2.py` y `test_t119_motor.py` no se leyeron enteros; el hostil solo sustituye tres elementos por lista.
 
 Vuelve a `ri-implementar`. En la r02 se vuelven a ejecutar `r01_01` a `r01_09`.
 
@@ -173,4 +173,4 @@ Queda un **medio, H-10**, que conviene decidir con el operador antes del modo so
 
 **Condición de cierre:** `./tools/check_all.sh` 12/12 en el commit.
 
-**Sin comprobar:** el gate entero; los mutantes de la r01 fuera de los ocho vivos (no he vuelto a pasar `r01_09` entero) e `impl_r02_mutantes.py`; la ficha de REI-NAV-001 en el Catálogo (si su fila por sociedad es lo que pide); las suites de A-Forex y B.
+**Sin comprobar:** el gate entero; los mutantes de la r01 fuera de los ocho vivos (no he vuelto a pasar `r01_09` entero) e `impl_r02_mutantes.py`; la ficha de REI-NAV-001 en el Catálogo (si su fila por sociedad es lo que pide); la suite de B.

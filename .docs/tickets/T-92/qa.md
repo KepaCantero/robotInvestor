@@ -245,7 +245,7 @@ cd $W && .docs/scripts/gate.sh --completo        # 12/12: A 420, FX 68, B 176 (l
   - el 16 del tramo es de la r02;
   - el intervalo [0, 1] es la escala de HT-03;
   - 1 µs marca el final del día.
-- **Todo el Bloque A pasa por la función común.** No queda ningún uso de `RE_SECRETO` en `bloque_a/` fuera de `secretos_en_texto`. Forex y B tienen sus propios patrones, sin cambios.
+- **Todo el Bloque A pasa por la función común.** No queda ningún uso de `RE_SECRETO` en `bloque_a/` fuera de `secretos_en_texto`. B tiene sus propios patrones, sin cambios.
 - **El cerrojo cubre la apertura.** `__init__` recupera dentro de `_transaccion()`, así que un proceso que abre nunca aparta el registro de otro que está escribiendo (`r03_02`, caso 8).
 - **Recuperación idempotente.** Reabrir no repite la recuperación ni la incidencia, y el almacén sigue siendo escribible (`r03_02`, casos 2 y 2b). Si el proceso muere a mitad de la recuperación, al reabrir abre en lo sellado y el registro sigue apartado (caso 3).
 - **Un registro forjado nunca entra en la cadena:**

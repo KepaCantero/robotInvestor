@@ -1,7 +1,7 @@
 # Versiones exactas del entorno del proyecto (T-96), para pip -c. Las instala .docs/scripts/preparar_entorno.sh.
 # Salen de pip freeze del .venv con el que el gate pasó 12/12 el 11-11-2026, con Python 3.12.
 # Cambiar una versión: editar aquí, recrear el .venv con el script y pasar ./tools/check_all.sh completo en el mismo commit.
-# Las cuotas de ruff y mypy dependen de estas versiones (arch 9.0.0 suma dos errores de mypy en A y en A-Forex).
+# Las cuotas de ruff y mypy dependen de estas versiones (arch 9.0.0 suma dos errores de mypy en A).
 annotated-types==0.8.0
 anthropic==2.8.0
 anyio==4.16.0

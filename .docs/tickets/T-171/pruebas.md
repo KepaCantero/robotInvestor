@@ -54,7 +54,7 @@ los 24 de T-171; los 79 aplican sobre el código final.
 
 Ligeros, desde la raíz: `corpus_integridad` (696 archivos íntegros), `nfc_check`, `secrets_scan` y `refs_vivas`, en verde.
 ruff de los tres ejecutores 2813 ≤ 2813; mypy de A 109 ≤ 109 (`guias.py` limpio en los dos). `check_all.sh` completo no se pasó
-(lo pide el cierre; incluye las suites de A-Forex y B, que este ticket no toca); la suite de A sí, una vez.
+(lo pide el cierre; incluye la suite de B, que este ticket no toca); la suite de A sí, una vez.
 
 Comandos: los de `analisis-tecnico.md`.
 

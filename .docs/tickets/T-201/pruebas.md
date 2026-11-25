@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Bloque A (`tests/test_t201_cuotas.py`) | — | 38 superadas (35 en la r01) |
 | Bloque A completa (gate) | 607 de línea base | r01: 8472 superadas; r02: 8475 superadas |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 ## Criterio de aceptación → prueba
 

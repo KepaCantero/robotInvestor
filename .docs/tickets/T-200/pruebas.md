@@ -21,7 +21,7 @@
 | --- | --- | --- |
 | `tests/test_t200.py` | — | 4 pruebas, 5 casos, en verde (10 de 10 ejecuciones) |
 | Bloque A completo (gate) | — | 8401 superadas (línea base 607) |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 ## Criterio de aceptación → prueba
 

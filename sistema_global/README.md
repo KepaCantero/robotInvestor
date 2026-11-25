@@ -1,10 +1,10 @@
 # Sistema global del Robot Investor
 
-Esta carpeta reúne lo que gobierna el sistema por encima de los bloques A, A Forex y B: la Constitución global, el código de referencia de la Fase 1 («marco común de C») y los documentos de diseño y seguimiento de cada pieza. Es independiente de `bloque_*/`: no toca su corpus ni sus gates.
+Esta carpeta reúne lo que gobierna el sistema por encima de los bloques A y B: la Constitución global, el código de referencia de la Fase 1 («marco común de C») y los documentos de diseño y seguimiento de cada pieza. Es independiente de `bloque_*/`: no toca su corpus ni sus gates.
 
 | Carpeta | Contenido |
 | --- | --- |
-| `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.6 desde el 9-11-2026, con las enmiendas 2 y 3 ratificadas ese día; la V0.4, con la enmienda 1 ratificada el 7-11-2026, y las anteriores quedan en el historial de git). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
+| `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.7 desde el 25-11-2026, con la enmienda 6 de T-204, que quita el Bloque A Forex; la V0.6, del 9-11-2026, con las enmiendas 2 y 3 ratificadas ese día; la V0.4, con la enmienda 1 ratificada el 7-11-2026, y las anteriores quedan en el historial de git). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
 | `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.71; V0.37 a V0.41 y V0.60 a V0.66 las hizo GLM en paralelo y Claude las integró en V0.53 y V0.67). Recorrido completo con datos simulados: detección (también la vía de entrada `DIRECTA` por C, D o E y el modo `CONSULTA` desde la V0.68), encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
 | `documentos_0/` | Un Documento 0 por pieza, nombrado por la versión del código que la introdujo (problema, diseño, reglas, revisión independiente y límites). |
 | `seguimiento/` | Deuda técnica (D-xx del operador, T-xx técnicas), briefing de arranque para retomar el trabajo en otra conversación y cuestionario de decisiones del operador. |

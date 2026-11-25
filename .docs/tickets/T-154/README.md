@@ -20,7 +20,7 @@ Cerrar los cinco hallazgos bajos (H-01 a H-05) que dejó APTO la QA r01 de T-151
   - **H-03.** `Presupuesto.liquidar_primas`: en un grupo de prefijos en el que una llamada tuvo una petición sin respuesta que pudo cobrarse, cada bolsa paga su prima «solo» entera (la cota que ya tenía retenida), en vez del reparto de lo escrito que se vio. Así no depende de qué hilo llegó antes.
   - **H-04.** Pruebas de Q09 (`retry-after` infinito, NaN o negativo no vale como espera) y Q10 (`x-should-retry` sin distinguir mayúsculas). Las cabeceras se leen sin distinguir mayúsculas en el nombre ni en el valor. Tope nuevo, `llm.reintentos.espera_servidor_max_s`: si el servidor pide esperar más, no se reintenta (falla cerrado).
   - **H-05.** Textos: el CA-7 del README de T-151 y las cuotas de su `analisis-tecnico.md` y `pruebas.md`; INC-T129-01 y la salida S5 de `estimar_coste_ciclo_a.py` («los reintentos del SDK»).
-- No entra: A-Forex y B (su `max_retries`, H-05 c: un ticket por bloque antes de su modo sombra); la fila de la deuda técnica; el Documento 0 y los goldens; `bloque_a/cadena_b.py`, `motor/frontera_b.py`, `.docs/scripts/cadena_a_b.py`, `.docs/scripts/descargar_datos_bce.py`, `tests/test_t14[479].py` y `test_t150.py` (otra sesión); `sistema_global/marco_comun_c/`, la Constitución y el corpus; medir con la API.
+- No entra: B (su `max_retries`, H-05 c: un ticket por bloque antes de su modo sombra); la fila de la deuda técnica; el Documento 0 y los goldens; `bloque_a/cadena_b.py`, `motor/frontera_b.py`, `.docs/scripts/cadena_a_b.py`, `.docs/scripts/descargar_datos_bce.py`, `tests/test_t14[479].py` y `test_t150.py` (otra sesión); `sistema_global/marco_comun_c/`, la Constitución y el corpus; medir con la API.
 
 ## Diseño
 

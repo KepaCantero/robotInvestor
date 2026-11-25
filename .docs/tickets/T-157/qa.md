@@ -53,7 +53,7 @@ Desde `bloque_a/11_Ejecutor` de la copia:
    R28 pasa a definida sin error, una cita sembrada en el histórico no aparece, y siguen los 3 errores. Fallo: con un destino
    de salida que no existe no sale 2 (H-06).
 5. **Restricciones.** Ningún `.md` ni `.docx` del corpus cambia (huellas de todos antes y después de mis pasadas, más
-   `corpus_integridad.py`). No toca `bloque_a_forex/` ni `bloque_b/`. D-1 a D-4 solo se proponen (INC-T157-02 a 05); el código de
+   `corpus_integridad.py`). No toca `bloque_b/`. D-1 a D-4 solo se proponen (INC-T157-02 a 05); el código de
    `evaluador.py` y `operaciones.py` sigue igual. Quién decide: D-1 es código del ejecutor y la decide el agente por defecto
    (regla del 13-11-2026), correcto; D-2 a D-4 cambian una entrega congelada y por eso las decide el operador, también correcto
    según los límites de esa misma regla. Observación en H-08.

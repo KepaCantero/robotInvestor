@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Bloque A (`pytest -q bloque_a/11_Ejecutor`, recogidas) | 8188 | 8205 (+17 de `tests/test_t178.py`) |
 | Bloque A, ejecución completa (una vez, al final) | — | 8202 superadas, 2 omitidas, 1 fallo esperado (`test_fase4_mapa.py::test_h05_el_documento_publicado_coincide_con_el_mapa`: el documento de evidencias aún no estaba regenerado). Tras `evidencias_plan_a.py --ejecutar`, `tests/test_fase4_mapa.py` 23/23 |
-| A-Forex, B | sin tocar | sin tocar |
+| B | sin tocar | sin tocar |
 
 La línea base de A (607) se respeta con holgura.
 
@@ -30,7 +30,7 @@ La línea base de A (607) se respeta con holgura.
 
 ## Gate
 
-Ejecutados por separado (la suite de A ya se pasó completa una vez; A-Forex y B no se tocan):
+Ejecutados por separado (la suite de A ya se pasó completa una vez; B no se toca):
 
 - corpus-integridad, nombres-nfc, secrets, refs-vivas: OK.
 - ruff (A + A-Forex + B, como el gate): 2813 (cuota 2813, sin subir; `carga.py`, `ht08_monitor.py` y `test_t178.py` limpios).

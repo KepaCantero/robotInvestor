@@ -11,7 +11,11 @@ Copia el script a un repositorio de juguete en una carpeta temporal y lo ejecuta
 5. una ruta rota fuera de `revisores/` sigue haciendo fallar el gate;
 6. en una orden, cada argumento con forma de ruta del repo se comprueba también (QA r01 de T-65, H-06);
 7. comodines (valen si casan), archivos de salida (no se comprueban), intérpretes y comillas (QA r02 de T-65, H-15);
-8. opciones del intérprete y argumentos entre comillas con espacios (QA r03 de T-65, H-22).
+8. opciones del intérprete y argumentos entre comillas con espacios (QA r03 de T-65, H-22);
+9. un bloque retirado (T-204, `bloque_a_forex`): su cita es una ruta muerta, también la carpeta sola, abreviada o como
+   argumento, aunque la carpeta vuelva; vale en los registros de `.docs/` (tickets, diario, memoria, diseño) y en una
+   línea marcada con el ticket que lo retiró; la marca es una palabra (T-2040 no vale), el «=» solo parte las opciones y
+   la marca vale también delante de la cita (QA r01 de T-204, H-06).
 Uso: python3 .docs/scripts/prueba_refs_vivas.py [ruta del script; por defecto tools/refs_vivas.py]. Sale con 1 si falla.
 """
 import shutil
@@ -89,6 +93,40 @@ CASOS = [
     ("pytest con prueba rota falla", {"docs/x.md": "Ejecuta `pytest -q bloque_a/tests/test_no_existe.py`.\n"}, [], 1),
     ("comodín que sale del repo falla", {"docs/x.md": "Ejecuta `tools/a.py docs/../../*.md`.\n"}, ["tools/a.py"], 1),
     ("corchete literal en un nombre vivo pasa", {"docs/x.md": "Ver `docs/[PROPUESTO].md`.\n"}, ["docs/[PROPUESTO].md"], 0),
+    # T-204: el Bloque A Forex se eliminó del repositorio (orden del operador del 25-11-2026)
+    ("bloque retirado: ruta en un documento vivo falla", {"docs/x.md": "Ver `bloque_a_forex/11_Ejecutor/README.md`.\n"}, [], 1),
+    ("bloque retirado: carpeta sola falla", {"CLAUDE.md": "| `bloque_a_forex/` | Divisas |\n"}, [], 1),
+    ("bloque retirado: cita abreviada falla", {"prompts/x.md": "Lee `bloque_a_forex/README - Índice….md`.\n"}, [], 1),
+    ("bloque retirado: argumento de pytest falla", {"AGENTS.md": "Ejecuta `pytest -q bloque_a_forex/11_Ejecutor`.\n"}, [], 1),
+    ("bloque retirado: --opcion=ruta falla", {"docs/x.md": "Ejecuta `tools/a.py --datos=./bloque_a_forex/x.csv`.\n"},
+     ["tools/a.py"], 1),
+    ("bloque retirado: en .docs/README.md falla", {".docs/README.md": "Ver `bloque_a_forex/x.py`.\n"}, [], 1),
+    ("bloque retirado: en .docs/knowledge falla", {".docs/knowledge/01.md": "Ver `bloque_a_forex/`.\n"}, [], 1),
+    ("bloque retirado: en una skill falla", {".agents/skills/x/SKILL.md": "Ver `bloque_a_forex/x.py`.\n"}, [], 1),
+    ("bloque retirado: aunque la carpeta vuelva falla", {"docs/x.md": "Ver `bloque_a_forex/x.py`.\n"}, ["bloque_a_forex/x.py"], 1),
+    ("bloque retirado: línea marcada con T-204 pasa",
+     {"docs/x.md": "`bloque_a_forex/` (eliminado el 25-11-2026, T-204).\n"}, [], 0),
+    ("bloque retirado: la marca en otra línea no vale",
+     {"docs/x.md": "Eliminado con T-204.\nVer `bloque_a_forex/x.py`.\n"}, [], 1),
+    ("bloque retirado: en un ticket pasa", {".docs/tickets/T-99/pruebas.md": "`pytest -q bloque_a_forex/11_Ejecutor`.\n"}, [], 0),
+    ("bloque retirado: en el diario pasa", {".docs/diario/2026-11.md": "Ver `bloque_a_forex/x.py`.\n"}, [], 0),
+    ("bloque retirado: en la memoria pasa", {".docs/memoria/claude/x.md": "Ver `bloque_a_forex/x.py`.\n"}, [], 0),
+    ("bloque retirado: en un diseño pasa", {".docs/diseno/b/x.md": "No toques `bloque_a_forex/`.\n"}, [], 0),
+    ("bloque retirado: en un ticket, el otro argumento roto falla",
+     {".docs/tickets/T-99/pruebas.md": "`tools/a.py bloque_a_forex/x.csv tools/no_existe.csv`.\n"}, ["tools/a.py"], 1),
+    ("bloque retirado: línea marcada, script roto falla",
+     {"docs/x.md": "`tools/no_existe.py bloque_a_forex/x.csv` (eliminado, T-204).\n"}, [], 1),
+    # QA r01 de T-204, H-06: la marca es una palabra, «=» solo en opciones, la marca antes de la cita
+    ("bloque retirado: marca de otro ticket (T-2040) no vale", {"docs/x.md": "Ver `bloque_a_forex/x.py` (T-2040).\n"}, [], 1),
+    ("bloque retirado: nombre con = sigue siendo del bloque", {"docs/x.md": "Ver `bloque_a_forex/a=b.md`.\n"}, [], 1),
+    ("bloque retirado: marca antes de la cita en la línea pasa",
+     {"docs/x.md": "| T-204: se quita `bloque_a_forex/` del gate |\n"}, [], 0),
+    # QA r02 de T-204, H-12: una asignación de entorno delante de la orden
+    ("bloque retirado: PYTHONPATH=… delante de pytest falla", {"docs/x.md": "Ejecuta `PYTHONPATH=bloque_a_forex/11_Ejecutor pytest -q`.\n"},
+     [], 1),
+    ("bloque retirado: env PYTHONPATH=… delante de python falla",
+     {"docs/x.md": "Ejecuta `env PYTHONPATH=bloque_a_forex/11_Ejecutor python3 -m pytest`.\n"}, [], 1),
+    ("bloque vivo de nombre parecido pasa", {"docs/x.md": "Ver `bloque_a/x.py`.\n"}, ["bloque_a/11_Ejecutor/bloque_a/x.py"], 0),
 ]
 
 

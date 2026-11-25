@@ -19,7 +19,7 @@ corpus ni del ejecutor: solo lectura, greps y ciclos mock.
    - `bloque_x/11_Ejecutor/`: `evaluador.py`, `almacen.py`, `orquestacion.py`,
      `prompts.py`, `seguimiento.py`.
 
-2. Por cada bloque (A, A-Forex, B) verifica y anota EVIDENCIA (archivo:línea o
+2. Por cada bloque (A, B) verifica y anota EVIDENCIA (archivo:línea o
    salida de comando) de cinco capacidades:
    a. ESCRITURA — ¿algún módulo escribe entradas LEC-, MET-, RES- o CERT- en un
       almacén persistente?
@@ -37,7 +37,7 @@ corpus ni del ejecutor: solo lectura, greps y ciclos mock.
    e. CADUCIDAD — ¿algún código aplica la caducidad obligatoria de lecciones y el
       límite de 10 vigentes por ámbito, o es regla solo documental?
 
-3. Matriz de veredicto (3 bloques × 5 capacidades), cada celda con estado
+3. Matriz de veredicto (2 bloques × 5 capacidades), cada celda con estado
    IMPLEMENTADO · PARCIAL · SOLO ESQUEMA y su evidencia.
 
 4. Cada hueco → incidencia nueva en `docs/incidencias.md` (INC-xxx) con el hueco

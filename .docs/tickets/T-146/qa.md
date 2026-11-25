@@ -139,7 +139,7 @@ Scripts de esta ronda en `revisores/`: `r01_01_reserva_unidad.py`, `r01_02_ciclo
 
 Invariantes del sistema comprobados: ningún camino nuevo llega a una orden sin F y G (la r02 solo toca presupuesto, JSON y registro); no hay LLM en la ruta determinista; los controles no se relajan (si AG-18 no cabe, G3 queda en la regla restrictiva; R8 por lo anidado falla cerrado); todo falla cerrado (lo que no cabe no sale; la clave nueva negativa, NaN, texto o nula es error); el único número nuevo (`tokens_lectura_por_busqueda: 0`) está en la configuración con su origen, `[PROPUESTO]` y la pregunta al operador; sin secretos (gate en verde). La r02 toca la línea de T-146 y T-148 en la deuda técnica solo para el estado (no la cierra).
 
-No comprobado: el gasto real con la API (sin red ni coste) y por tanto lo que miden de verdad los bloques de resultado de búsqueda (H-11) y los reintentos de *timeout* del SDK (H-09); `./tools/check_all.sh` entero; las suites de A-Forex y B (la r02 no las toca).
+No comprobado: el gasto real con la API (sin red ni coste) y por tanto lo que miden de verdad los bloques de resultado de búsqueda (H-11) y los reintentos de *timeout* del SDK (H-09); `./tools/check_all.sh` entero; la suite de B (la r02 no las toca).
 
 Scripts de esta ronda en `revisores/`: `r02_01_arreglos_r02.py` y `r02_02_mutantes_qa.py`.
 

@@ -24,7 +24,7 @@ Corregir lo que las QA r03 de T-75 y T-76 dejaron en la deuda al dar APTO. Lo m�
 - **No entra:**
   - contrastar los movimientos de la sombra con los de la cartera real, que es de G y K (T-86);
   - los avisos O-42 antiguos que siguen vivos tras comparar el mes (observación M4 de la r03 de T-76): se acusan como cualquier aviso;
-  - los bloques A, A-Forex y B, y la Constitución.
+  - los bloques A y B, y la Constitución.
 
 ## Diseño
 

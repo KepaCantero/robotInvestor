@@ -1,10 +1,10 @@
-# PROMPT — Fase 3 · Goldens de contratos (ambos A)
+# PROMPT — Fase 3 · Goldens de contratos (bloque_a)
 
 > Sesión de precisión sobre formatos. Modelo: el más capaz. Requisito: Fases 0–1 verificadas.
 
 ---
 
-FASE 3 — Congelar los contratos CT en goldens verificables para que ningún cambio futuro pueda romper un formato sin que salte una prueba. Empieza por bloque_a (CT-01..CT-25) y luego replica en bloque_a_forex con sus contratos.
+FASE 3 — Congelar los contratos CT en goldens verificables para que ningún cambio futuro pueda romper un formato sin que salte una prueba. Se hace en bloque_a (CT-01..CT-25).
 
 Kit de contexto:
 - `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md` — Anexo B (campos mínimos de contratos y esquemas JSON) y §6 (catálogo de contratos).
@@ -15,7 +15,7 @@ Entregables:
 1. Por cada contrato con esquema en el código: validación jsonschema del ejemplo/fixture + golden congelado (fichero esperado) comparado exactamente.
 2. Los contratos que solo existen en el Anexo B y no tienen esquema en código: esquema JSON nuevo derivado SOLO del Anexo B + ejemplo mínimo, marcado como «derivado del Anexo B» en el propio fichero.
 3. Regla de re-congelado documentada en el README de los goldens: solo deliberado, un commit con golden+motivo (igual que el corpus de conformance de robotTrading).
-4. `pytest` de los tres bloques sigue con cero fallos.
+4. `pytest` de los dos bloques sigue con cero fallos.
 
 Restricciones fijas + commits `fase3:`.
 

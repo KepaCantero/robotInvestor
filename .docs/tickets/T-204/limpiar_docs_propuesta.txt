@@ -1,0 +1,283 @@
+== .docs/diario/2026-11.md
+199: ANTES: **Resultado.** `pyproject.toml` y `bloque_a.__version__` pasan a 1.2.0, la del README (INC-001, decidido por delegación del operador). `tests/test_t167_version.py` ata los tres; la trampa de `CLAUDE.md` y la nota de INC-001 lo dicen. INC-002 (A-Forex) sigue abierta.
+199: AHORA: **Resultado.** `pyproject.toml` y `bloque_a.__version__` pasan a 1.2.0, la del README (INC-001, decidido por delegación del operador). `tests/test_t167_version.py` ata los tres; la trampa de `CLAUDE.md` y la nota de INC-001 lo dicen.
+726: ANTES: **Correcciones.** Ninguna al comportamiento del diseño por defecto (V5). Decisiones del operador del día: en INC-T114-01 manda el código; el Forex es solo una prueba con divisas (T-115 aplazada); desde hoy el agente decide por defecto y lo apunta en `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (registro nuevo, unas 40 filas).
+726: AHORA: **Correcciones.** Ninguna al comportamiento del diseño por defecto (V5). Decisiones del operador del día: en INC-T114-01 manda el código; desde hoy el agente decide por defecto y lo apunta en `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (registro nuevo, unas 40 filas).
+985: ANTES: - **T-103:** cerrado con la QA r02 APTO. Los hallazgos nuevos pasan a la deuda: T-104 (Bloque A) y T-105 (A-Forex y B).
+985: AHORA: - **T-103:** cerrado con la QA r02 APTO. Los hallazgos nuevos pasan a la deuda: T-104 (Bloque A) y T-105 (B).
+== .docs/knowledge/05_historia-del-proyecto.md
+35: ANTES:   - A Forex y B Forex quedan fuera del Robot Investor (D-20); la Fase 1 se hace en divisas con los A y B generales;
+35: AHORA:   - B Forex queda fuera del Robot Investor (D-20); la Fase 1 se hace en divisas con los A y B generales;
+== .docs/memoria/compartida/2026-11-09_estado-del-proyecto.md
+13: ANTES: - **Bloques A y B:** son entregas anteriores con contratos propios (CT-B). A Forex y B Forex fueron pruebas y quedan fuera del Robot Investor.
+13: AHORA: - **Bloques A y B:** son entregas anteriores con contratos propios (CT-B). B Forex fue una prueba y queda fuera del Robot Investor.
+== .docs/memoria/compartida/2026-11-09_estado-tras-v05.md
+16: ANTES: - **Bloques A y B:** entregas anteriores con contratos CT-B; necesitan un adaptador a CT-G. A Forex y B Forex quedan fuera.
+16: AHORA: - **Bloques A y B:** entregas anteriores con contratos CT-B; necesitan un adaptador a CT-G. B Forex queda fuera.
+== .docs/memoria/compartida/2026-11-13_codigo-manda-sobre-doc0-a.md
+6: ANTES: etiquetas: [bloque_a, documento_0, contratos, forex]
+6: AHORA: etiquetas: [bloque_a, documento_0, contratos]
+17: BORRADA: - **El Bloque A Forex** es una prueba del Bloque A centrada solo en divisas. No se integra en el bloque final, porque las divisas ya están entre los 12 tipos de activo, pero se quiere poder probarlo solo con divisas.
+23: ANTES: - No se dijo nada del Bloque B ni del Forex frente a sus Documentos 0.
+23: AHORA: - No se dijo nada del Bloque B frente a su Documento 0.
+24: BORRADA: - Tareas de protección o de integración del Forex (por ejemplo T-115) no se hacen sin orden.
+== .docs/memoria/compartida/INDICE.md
+26: ANTES: | compartida/2026-11-13_codigo-manda-sobre-doc0-a | decision | Bloque A: donde el Documento 0 y el ejecutor difieren, manda el código (operador, 13-11-2026); el Forex es solo una prueba con divisas y no se integra | vigente |
+26: AHORA: | compartida/2026-11-13_codigo-manda-sobre-doc0-a | decision | Bloque A: donde el Documento 0 y el ejecutor difieren, manda el código (operador, 13-11-2026) | vigente |
+== .docs/tickets/T-100/README.md
+27: ANTES:   - los bloques A, A-Forex y B, y la Constitución.
+27: AHORA:   - los bloques A y B, y la Constitución.
+== .docs/tickets/T-101/README.md
+41: ANTES:   - A-Forex y B.
+41: AHORA:   - B.
+== .docs/tickets/T-103/README.md
+62: ANTES: - 2026-11-12 · CERRADO · QA r02 APTO (otro revisor nuevo, commit `7feb697`): CA-1 a CA-9 cumplidos, sin críticos ni altos. A la deuda: H-53 (A-Forex y B, fila T-105), H-54 a H-56 (fila T-104)
+62: AHORA: - 2026-11-12 · CERRADO · QA r02 APTO (otro revisor nuevo, commit `7feb697`): CA-1 a CA-9 cumplidos, sin críticos ni altos. A la deuda: H-53 (B, fila T-105), H-54 a H-56 (fila T-104)
+== .docs/tickets/T-103/qa.md
+165: ANTES: | H-53 | media | `r02_01_jsonl_lectores.py <W> --repo <raíz>`, caso 6: `Almacen(d).escribir(...)` con «a b» en A-Forex y en B, y después `Almacen(d)`. Además, `.docs/scripts/registro_experimentos.py` con U+2028 en una anotación | **Esperado:** la causa de H-48 (alta en la r01) se corrige o se declara donde también está. **Obtenido:** el mismo `splitlines()` sobre JSONL escrito con `ensure_ascii=False` sigue en `bloque_a_forex` (`almacen.py:96` y `:212`, `llm.py:177`, `herramientas/ht06_indice.py:42`) y en `bloque_b` (`almacen.py:104` y `:213`, `llm.py:177`). Los dos almacenes no vuelven a abrir (`JSONDecodeError`), y `registro_experimentos.py:64` da «el registro está dañado». No está en `analisis-tecnico.md`, ni en la fila T-103 de la deuda, ni en `docs/incidencias.md`. La regla 8 impide arreglarlo dentro de T-103, pero hay que declararlo: para A-Forex y B el defecto es tan grave como H-48, y los dos van al modo sombra | Abrir una fila de deuda o un ticket por bloque (A-Forex y B, `split("\n")` en los mismos sitios y la regresión de `test_r02_h48`) antes de su modo sombra. `registro_experimentos.py` es del espacio de trabajo y se corrige en una línea | abierto |
+165: AHORA: | H-53 | media | `r02_01_jsonl_lectores.py <W> --repo <raíz>`, caso 6: `Almacen(d).escribir(...)` con «a b» en B, y después `Almacen(d)`. Además, `.docs/scripts/registro_experimentos.py` con U+2028 en una anotación | **Esperado:** la causa de H-48 (alta en la r01) se corrige o se declara donde también está. **Obtenido:** el mismo `splitlines()` sobre JSONL escrito con `ensure_ascii=False` sigue en `bloque_a_forex` (`almacen.py:96` y `:212`, `llm.py:177`, `herramientas/ht06_indice.py:42`) y en `bloque_b` (`almacen.py:104` y `:213`, `llm.py:177`). Los dos almacenes no vuelven a abrir (`JSONDecodeError`), y `registro_experimentos.py:64` da «el registro está dañado». No está en `analisis-tecnico.md`, ni en la fila T-103 de la deuda, ni en `docs/incidencias.md`. La regla 8 impide arreglarlo dentro de T-103, pero hay que declararlo: para B el defecto es tan grave como H-48, y los dos van al modo sombra | Abrir una fila de deuda o un ticket por bloque (B, `split("\n")` en los mismos sitios y la regresión de `test_r02_h48`) antes de su modo sombra. `registro_experimentos.py` es del espacio de trabajo y se corrige en una línea | abierto |
+188: ANTES: - No queda abierto ningún hallazgo crítico ni alto de T-103. H-53 y H-54 son medios, y H-55 y H-56, bajos. H-54 y H-56 son anteriores a T-103, y H-53 está fuera de su alcance por la regla 8. Pasan a la deuda técnica con su ID: H-53, con una fila o ticket por bloque (A-Forex y B) antes del modo sombra de esos bloques; H-54, con un ticket antes del modo sombra con API del Bloque A.
+188: AHORA: - No queda abierto ningún hallazgo crítico ni alto de T-103. H-53 y H-54 son medios, y H-55 y H-56, bajos. H-54 y H-56 son anteriores a T-103, y H-53 está fuera de su alcance por la regla 8. Pasan a la deuda técnica con su ID: H-53, con una fila o ticket por bloque (B) antes del modo sombra de esos bloques; H-54, con un ticket antes del modo sombra con API del Bloque A.
+== .docs/tickets/T-106/qa.md
+109: ANTES: Extracción limpia con `git worktree add --detach <scratchpad>/wt 4be8ea6`, con el `.venv` del proyecto enlazado y `PYTHONPATH` apuntando a los tres ejecutores de la extracción (comprobado que `bloque_a`, `bloque_a_forex` y `bloque_b` se importan de ahí). Las copias para mutantes son del `bloque_a` entero sin `.docx`. Extracción y copias borradas al terminar.
+109: AHORA: Extracción limpia con `git worktree add --detach <scratchpad>/wt 4be8ea6`, con el `.venv` del proyecto enlazado y `PYTHONPATH` apuntando a los tres ejecutores de la extracción (comprobado que `bloque_a` y `bloque_b` se importan de ahí). Las copias para mutantes son del `bloque_a` entero sin `.docx`. Extracción y copias borradas al terminar.
+217: ANTES: Extracciones limpias con `git worktree add --detach <scratchpad>/wt 94cc765` y `<scratchpad>/wt_padre 4be8ea6` (el commit revisado en la r02), con el `.venv` del proyecto enlazado y `PYTHONPATH` a los tres ejecutores de cada extracción (comprobado que `bloque_a`, `bloque_a_forex` y `bloque_b` se importan de ahí). Las copias de los mutantes son del `bloque_a` entero sin `.docx`, en carpetas temporales. Extracciones y copias borradas al terminar; el árbol principal no se ha tocado salvo este apartado y los scripts `r03_*`.
+217: AHORA: Extracciones limpias con `git worktree add --detach <scratchpad>/wt 94cc765` y `<scratchpad>/wt_padre 4be8ea6` (el commit revisado en la r02), con el `.venv` del proyecto enlazado y `PYTHONPATH` a los tres ejecutores de cada extracción (comprobado que `bloque_a` y `bloque_b` se importan de ahí). Las copias de los mutantes son del `bloque_a` entero sin `.docx`, en carpetas temporales. Extracciones y copias borradas al terminar; el árbol principal no se ha tocado salvo este apartado y los scripts `r03_*`.
+== .docs/tickets/T-113/README.md
+8: ANTES: | Aprobación del operador | 2026-11-13: «Corrige toda la deuda técnica» (la del Bloque A: T-104, T-107, T-108, T-109 y T-110; T-105 es de A-Forex y B) |
+8: AHORA: | Aprobación del operador | 2026-11-13: «Corrige toda la deuda técnica» (la del Bloque A: T-104, T-107, T-108, T-109 y T-110; T-105 es de B) |
+== .docs/tickets/T-113/pruebas.md
+27: ANTES: La suite completa incluye `test_t102_filtro.py`, `test_t101_v6.py`, `test_t88_consumo.py`, `test_t106_*.py`, `test_unitarias.py` y `test_fase3_goldens.py`. Las suites de A-Forex y de B no se han ejecutado: la ronda no toca esos paquetes.
+27: AHORA: La suite completa incluye `test_t102_filtro.py`, `test_t101_v6.py`, `test_t88_consumo.py`, `test_t106_*.py`, `test_unitarias.py` y `test_fase3_goldens.py`. Las suites de B no se han ejecutado: la ronda no toca esos paquetes.
+79: ANTES: - El gate completo y las suites de A-Forex y B.
+79: AHORA: - El gate completo y la suite de B.
+== .docs/tickets/T-113/qa.md
+126: ANTES: - El gate completo y las suites de A-Forex y B (no relanzados, ver arriba).
+126: AHORA: - El gate completo y la suite de B (no relanzados, ver arriba).
+== .docs/tickets/T-114/README.md
+29: BORRADA:   - el Bloque A Forex (regla 8): su réplica es T-115;
+119: ANTES: - 2026-11-13 · EN CURSO · claude · decisiones del operador: en INC-T114-01 manda el código del Bloque A (el Documento 0 se escribió antes de construirlo y se modificará); T-115 (Forex) aplazada, no se hace sin orden
+119: AHORA: - 2026-11-13 · EN CURSO · claude · decisiones del operador: en INC-T114-01 manda el código del Bloque A (el Documento 0 se escribió antes de construirlo y se modificará), no se hace sin orden
+== .docs/tickets/T-114/analisis-tecnico.md
+35: BORRADA:   - El Bloque A Forex queda para T-115.
+125: BORRADA: - El Bloque A Forex queda para T-115.
+== .docs/tickets/T-116/README.md
+26: ANTES:   - los bloques A Forex y B (un bloque por sesión; el Forex, además, no se integra: decisión del 13-11-2026);
+26: AHORA:   - el Bloque B (un bloque por sesión);
+== .docs/tickets/T-116/qa.md
+581: ANTES: - `--ejecutar` completo, el gate entero, A-Forex y B (encargo).
+581: AHORA: - `--ejecutar` completo, el gate entero, B (encargo).
+== .docs/tickets/T-118/pruebas.md
+9: ANTES: | A-Forex y B | 68 y 176 | no se tocan ni se ejecutaron |
+9: AHORA: | B | 176 | no se toca ni se ejecuta |
+== .docs/tickets/T-119/qa.md
+91: ANTES: **Sin comprobar:** el gate completo `check_all.sh` y las suites de A-Forex y B (no se lanzaron); la regresión del ciclo simulado de `CLAUDE.md` (T-119 no toca el ciclo); los casos de control de las 70 fichas anteriores aparte de la suite; los mutantes Q28 y Q83 (no aplicados); `test_t119_p2.py` y `test_t119_motor.py` no se leyeron enteros; el hostil solo sustituye tres elementos por lista.
+91: AHORA: **Sin comprobar:** el gate completo `check_all.sh` y la suite de B (no se lanzaron); la regresión del ciclo simulado de `CLAUDE.md` (T-119 no toca el ciclo); los casos de control de las 70 fichas anteriores aparte de la suite; los mutantes Q28 y Q83 (no aplicados); `test_t119_p2.py` y `test_t119_motor.py` no se leyeron enteros; el hostil solo sustituye tres elementos por lista.
+176: ANTES: **Sin comprobar:** el gate entero; los mutantes de la r01 fuera de los ocho vivos (no he vuelto a pasar `r01_09` entero) e `impl_r02_mutantes.py`; la ficha de REI-NAV-001 en el Catálogo (si su fila por sociedad es lo que pide); las suites de A-Forex y B.
+176: AHORA: **Sin comprobar:** el gate entero; los mutantes de la r01 fuera de los ocho vivos (no he vuelto a pasar `r01_09` entero) e `impl_r02_mutantes.py`; la ficha de REI-NAV-001 en el Catálogo (si su fila por sociedad es lo que pide); la suite de B.
+== .docs/tickets/T-120/README.md
+22: ANTES:   - IBAN de otros países; el Bloque A Forex, que tiene el mismo patrón (un bloque por tarea; además no se integra).
+22: AHORA:   - IBAN de otros países.
+== .docs/tickets/T-120/analisis-tecnico.md
+16: ANTES: - Límites conocidos: un IBAN partido de otra forma (grupos de dos, saltos de línea, letras intercaladas) no se detecta; el Forex conserva el patrón antiguo.
+16: AHORA: - Límites conocidos: un IBAN partido de otra forma (grupos de dos, saltos de línea, letras intercaladas) no se detecta.
+== .docs/tickets/T-121/qa.md
+71: ANTES: **Sin comprobar:** el gate entero; `impl_mutantes.py` del implementador (55 mutantes) no lo he vuelto a ejecutar, así que los bloques opcionales de H-04 que los casos de control no traen (historias, decisiones, precios, encuestas…) los he verificado leyendo el diff y por sus pruebas, no con un ataque mío; el `r01_07` completo (los 72 mutantes de T-118), solo los cinco de H-06; las suites de A-Forex y B; datos y modelo reales (fuera del alcance). Tiempos medidos en una máquina compartida con otras dos suites en marcha.
+71: AHORA: **Sin comprobar:** el gate entero; `impl_mutantes.py` del implementador (55 mutantes) no lo he vuelto a ejecutar, así que los bloques opcionales de H-04 que los casos de control no traen (historias, decisiones, precios, encuestas…) los he verificado leyendo el diff y por sus pruebas, no con un ataque mío; el `r01_07` completo (los 72 mutantes de T-118), solo los cinco de H-06; la suite de B; datos y modelo reales (fuera del alcance). Tiempos medidos en una máquina compartida con otras dos suites en marcha.
+== .docs/tickets/T-122/qa.md
+74: ANTES: **Sin comprobar:** el gate entero; los demás scripts de la QA r02 de T-113 (`r02_01`, `r02_05`) y de la r01 (`r01_13`); las suites de A-Forex y B.
+74: AHORA: **Sin comprobar:** el gate entero; los demás scripts de la QA r02 de T-113 (`r02_01`, `r02_05`) y de la r01 (`r01_13`); la suite de B.
+== .docs/tickets/T-123/analisis-tecnico.md
+12: BORRADA: - El Bloque A Forex tiene su propia copia de `RE_SECRETO` y no se toca (un bloque por tarea; el Forex no se integra).
+== .docs/tickets/T-123/qa.md
+56: ANTES: **Sin comprobar:** el gate entero; las suites de A-Forex y B (el Forex tiene su propia copia de `RE_SECRETO` y no se toca); mensajes de un ciclo con el modelo real.
+56: AHORA: **Sin comprobar:** el gate entero; la suite de B; mensajes de un ciclo con el modelo real.
+129: ANTES: **Sin comprobar:** el gate entero; A-Forex y B; mensajes de un ciclo con el modelo real; las redes Diners y Maestro y el formato con puntos (fuera de lo declarado, como en la r01).
+129: AHORA: **Sin comprobar:** el gate entero; B; mensajes de un ciclo con el modelo real; las redes Diners y Maestro y el formato con puntos (fuera de lo declarado, como en la r01).
+== .docs/tickets/T-124/qa.md
+47: ANTES: **Sin comprobar:** el gate entero (pasó en el commit); los goldens del Bloque A Forex (T-115).
+47: AHORA: **Sin comprobar:** el gate entero (pasó en el commit).
+== .docs/tickets/T-125/qa.md
+185: ANTES: - El gate completo (`check_all.sh`), A-Forex y B (encargo).
+185: AHORA: - El gate completo (`check_all.sh`), B (encargo).
+318: ANTES: - El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+318: AHORA: - El gate completo (`./tools/check_all.sh`), B (encargo).
+== .docs/tickets/T-126/qa.md
+131: ANTES: - El gate completo (`check_all.sh`), A-Forex y B (encargo).
+131: AHORA: - El gate completo (`check_all.sh`), B (encargo).
+== .docs/tickets/T-127/qa.md
+69: ANTES: | Gate entero, A-Forex y B | — | no lanzados (por instrucción; pasaron en el commit) |
+69: AHORA: | Gate entero, B | — | no lanzados (por instrucción; pasaron en el commit) |
+81: ANTES: **Sin comprobar:** el gate entero; A-Forex y B; REI-NAV-001 (fuera del alcance, anotado en INC-T127-01); ciclos con el modelo real.
+81: AHORA: **Sin comprobar:** el gate entero; B; REI-NAV-001 (fuera del alcance, anotado en INC-T127-01); ciclos con el modelo real.
+147: ANTES: | Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+147: AHORA: | Gate entero, B | — | no lanzados (por instrucción) |
+159: ANTES: **Sin comprobar:** el gate entero; A-Forex y B; ciclos con el modelo real.
+159: AHORA: **Sin comprobar:** el gate entero; B; ciclos con el modelo real.
+231: ANTES: | Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+231: AHORA: | Gate entero, B | — | no lanzados (por instrucción) |
+245: ANTES: **Sin comprobar:** el gate entero (`./tools/check_all.sh`), A-Forex y B (por instrucción); ciclos con el modelo real; el comportamiento de un agente analista real al construir componentes.
+245: AHORA: **Sin comprobar:** el gate entero (`./tools/check_all.sh`), B (por instrucción); ciclos con el modelo real; el comportamiento de un agente analista real al construir componentes.
+== .docs/tickets/T-128/qa.md
+70: ANTES: **Sin comprobar:** el gate entero; A-Forex y B; las 14 fichas del ejecutor V1.0 solo se han visto en la tabla y en el barrido (no tienen casos de control); ciclos con el modelo real.
+70: AHORA: **Sin comprobar:** el gate entero; B; las 14 fichas del ejecutor V1.0 solo se han visto en la tabla y en el barrido (no tienen casos de control); ciclos con el modelo real.
+138: ANTES: **Sin comprobar:** el gate entero, A-Forex y B (por instrucción); la fila de la deuda técnica en el árbol principal (H-04 de la r01); ciclos con el modelo real.
+138: AHORA: **Sin comprobar:** el gate entero, B (por instrucción); la fila de la deuda técnica en el árbol principal (H-04 de la r01); ciclos con el modelo real.
+== .docs/tickets/T-131/qa.md
+124: ANTES: No lancé `./tools/check_all.sh`, ni A-Forex ni B (encargo).
+124: AHORA: No lancé `./tools/check_all.sh`, ni B (encargo).
+== .docs/tickets/T-132/qa.md
+30: ANTES: | No lanzado (por instrucción) | `./tools/check_all.sh`, suites de A-Forex y B | — |
+30: AHORA: | No lanzado (por instrucción) | `./tools/check_all.sh`, suites de B | — |
+== .docs/tickets/T-134/qa.md
+96: ANTES: - El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+96: AHORA: - El gate completo (`./tools/check_all.sh`), B (encargo).
+== .docs/tickets/T-135/pruebas.md
+73: ANTES: | A-Forex y B | no tocados, no lanzados |
+73: AHORA: | B | no tocados, no lanzados |
+== .docs/tickets/T-135/qa.md
+24: ANTES: No se lanzó `./tools/check_all.sh` (instrucción de la coordinación), ni las suites de A-Forex y B.
+24: AHORA: No se lanzó `./tools/check_all.sh` (instrucción de la coordinación), ni la suite de B.
+== .docs/tickets/T-136/qa.md
+84: ANTES: - El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+84: AHORA: - El gate completo (`./tools/check_all.sh`), B (encargo).
+== .docs/tickets/T-140/qa.md
+78: ANTES: - El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+78: AHORA: - El gate completo (`./tools/check_all.sh`), B (encargo).
+== .docs/tickets/T-143/README.md
+31: ANTES:   - `bloque_a_forex/`, `bloque_b/` (también su Documento 0, que cita «Documento 0 del Bloque A V5.1»), `sistema_global/marco_comun_c/`, la Constitución y la fila T-143 de la deuda;
+31: AHORA:   - `bloque_b/` (también su Documento 0, que cita «Documento 0 del Bloque A V5.1»), `sistema_global/marco_comun_c/`, la Constitución y la fila T-143 de la deuda;
+== .docs/tickets/T-143/qa.md
+248: ANTES: | Fuera del alcance (`git diff 1ccffd5 HEAD`) | sin cambios en `CLAUDE.md`, `bloque_a_forex/`, `bloque_b/`, `sistema_global/marco_comun_c/` ni la Constitución. En `sistema_global/seguimiento/`: la fila de la decisión del operador (en el alcance) y **la deuda técnica (fuera del alcance, H-18)**; además, un `.venv` versionado (H-18) |
+248: AHORA: | Fuera del alcance (`git diff 1ccffd5 HEAD`) | sin cambios en `CLAUDE.md`, `bloque_b/`, `sistema_global/marco_comun_c/` ni la Constitución. En `sistema_global/seguimiento/`: la fila de la decisión del operador (en el alcance) y **la deuda técnica (fuera del alcance, H-18)**; además, un `.venv` versionado (H-18) |
+== .docs/tickets/T-145/qa.md
+24: ANTES: | `./tools/check_all.sh`, A-Forex, B | no lanzados (instrucción del encargo) |
+24: AHORA: | `./tools/check_all.sh`, B | no lanzados (instrucción del encargo) |
+== .docs/tickets/T-146/qa.md
+142: ANTES: No comprobado: el gasto real con la API (sin red ni coste) y por tanto lo que miden de verdad los bloques de resultado de búsqueda (H-11) y los reintentos de *timeout* del SDK (H-09); `./tools/check_all.sh` entero; las suites de A-Forex y B (la r02 no las toca).
+142: AHORA: No comprobado: el gasto real con la API (sin red ni coste) y por tanto lo que miden de verdad los bloques de resultado de búsqueda (H-11) y los reintentos de *timeout* del SDK (H-09); `./tools/check_all.sh` entero; la suite de B (la r02 no las toca).
+== .docs/tickets/T-147/qa.md
+47: ANTES: No comprobado: los revisores de T-141 que necesitan red (`r01_contraste_fred.py`, `r02_festivos_y_huecos.py`); `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo).
+47: AHORA: No comprobado: los revisores de T-141 que necesitan red (`r01_contraste_fred.py`, `r02_festivos_y_huecos.py`); `./tools/check_all.sh` entero, B (fuera del encargo).
+== .docs/tickets/T-149/pruebas.md
+41: ANTES: `./tools/check_all.sh` entero no se ejecutó: A-Forex y B no se tocan y la suite de A se ejecutó una vez, aparte.
+41: AHORA: `./tools/check_all.sh` entero no se ejecutó: B no se toca y la suite de A se ejecutó una vez, aparte.
+== .docs/tickets/T-149/qa.md
+63: ANTES: No comprobado: `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; `T-142/revisores/r02_cadena_doce_tipos.sh` (la cadena de punta a punta sí, con la configuración por defecto); el ciclo real con un G3 BLOQUEADO de verdad (se simula la salida de `bloque-a ciclo`, como en las pruebas).
+63: AHORA: No comprobado: `./tools/check_all.sh` entero, B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; `T-142/revisores/r02_cadena_doce_tipos.sh` (la cadena de punta a punta sí, con la configuración por defecto); el ciclo real con un G3 BLOQUEADO de verdad (se simula la salida de `bloque-a ciclo`, como en las pruebas).
+== .docs/tickets/T-150/qa.md
+65: ANTES: No comprobado: `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; la descarga real del BCE (solo con dobles); IDX-CONC-001 con datos de mercado reales (solo series sintéticas); `T-150/medir_truncado.py` y `T-149/medir_copias.py` con 300 semillas (medí lo mío con 60 y 100).
+65: AHORA: No comprobado: `./tools/check_all.sh` entero, B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; la descarga real del BCE (solo con dobles); IDX-CONC-001 con datos de mercado reales (solo series sintéticas); `T-150/medir_truncado.py` y `T-149/medir_copias.py` con 300 semillas (medí lo mío con 60 y 100).
+== .docs/tickets/T-152/qa.md
+73: ANTES: - A-Forex y B: no se tocan.
+73: AHORA: - B: no se tocan.
+== .docs/tickets/T-154/README.md
+23: ANTES: - No entra: A-Forex y B (su `max_retries`, H-05 c: un ticket por bloque antes de su modo sombra); la fila de la deuda técnica; el Documento 0 y los goldens; `bloque_a/cadena_b.py`, `motor/frontera_b.py`, `.docs/scripts/cadena_a_b.py`, `.docs/scripts/descargar_datos_bce.py`, `tests/test_t14[479].py` y `test_t150.py` (otra sesión); `sistema_global/marco_comun_c/`, la Constitución y el corpus; medir con la API.
+23: AHORA: - No entra: B (su `max_retries`, H-05 c: un ticket por bloque antes de su modo sombra); la fila de la deuda técnica; el Documento 0 y los goldens; `bloque_a/cadena_b.py`, `motor/frontera_b.py`, `.docs/scripts/cadena_a_b.py`, `.docs/scripts/descargar_datos_bce.py`, `tests/test_t14[479].py` y `test_t150.py` (otra sesión); `sistema_global/marco_comun_c/`, la Constitución y el corpus; medir con la API.
+== .docs/tickets/T-157/README.md
+35: ANTES:   - `bloque_a_forex/`, `bloque_b/`, la deuda técnica, el Documento 0, los goldens, `tests/test_fase3_goldens.py`, `llm.py`,
+35: AHORA:   - `bloque_b/`, la deuda técnica, el Documento 0, los goldens, `tests/test_fase3_goldens.py`, `llm.py`,
+== .docs/tickets/T-157/pruebas.md
+8: ANTES: | Bloque A Forex, Bloque B | no se tocan | no se ejecutan (regla 8; ningún archivo suyo cambia) |
+8: AHORA: | Bloque B | no se tocan | no se ejecutan (regla 8; ningún archivo suyo cambia) |
+== .docs/tickets/T-157/qa.md
+56: ANTES:    `corpus_integridad.py`). No toca `bloque_a_forex/` ni `bloque_b/`. D-1 a D-4 solo se proponen (INC-T157-02 a 05); el código de
+56: AHORA:    `corpus_integridad.py`). No toca `bloque_b/`. D-1 a D-4 solo se proponen (INC-T157-02 a 05); el código de
+== .docs/tickets/T-166/README.md
+35: ANTES:   - `bloque_a_forex/`, `bloque_b/`, `sistema_global/marco_comun_c/`, la Constitución y la fila T-166 de la deuda;
+35: AHORA:   - `bloque_b/`, `sistema_global/marco_comun_c/`, la Constitución y la fila T-166 de la deuda;
+== .docs/tickets/T-166/pruebas.md
+39: ANTES: - No se pasa `check_all.sh` completo: la suite de A-Forex y la de B no se tocan (otro bloque) y hay otros agentes con carga en la máquina; los gates de este ticket se pasaron uno a uno.
+39: AHORA: - No se pasa `check_all.sh` completo: la suite de B no se tocan (otro bloque) y hay otros agentes con carga en la máquina; los gates de este ticket se pasaron uno a uno.
+== .docs/tickets/T-167/README.md
+18: ANTES: - **No entra:** A-Forex (INC-002), que no es del Bloque A; reinstalar el paquete en los entornos ya creados.
+18: AHORA: - **No entra:** reinstalar el paquete en los entornos ya creados.
+== .docs/tickets/T-167/qa.md
+22: BORRADA: | `git diff --stat HEAD -- bloque_a_forex` | vacío: A-Forex no se toca (sigue en 1.0.0, INC-002 abierta) |
+73: ANTES: depende de «1.1.0» del Bloque A; A-Forex intacto; textos de INC-001 y `CLAUDE.md` exactos. Ningún hallazgo crítico, alto ni
+73: AHORA: depende de «1.1.0» del Bloque A; textos de INC-001 y `CLAUDE.md` exactos. Ningún hallazgo crítico, alto ni
+== .docs/tickets/T-171/pruebas.md
+57: ANTES: (lo pide el cierre; incluye las suites de A-Forex y B, que este ticket no toca); la suite de A sí, una vez.
+57: AHORA: (lo pide el cierre; incluye la suite de B, que este ticket no toca); la suite de A sí, una vez.
+== .docs/tickets/T-173/pruebas.md
+8: ANTES: | A-Forex, B | sin tocar | sin tocar (no se ejecutan: ningún archivo de esos bloques cambia) |
+8: AHORA: | B | sin tocar | sin tocar (no se ejecutan: ningún archivo de esos bloques cambia) |
+== .docs/tickets/T-175/pruebas.md
+7: BORRADA: | Bloque A-Forex, en el gate | 68 | 68 |
+70: ANTES: | A-Forex · B, en el gate | 68 · 176 | 68 · 176 |
+70: AHORA: | B, en el gate | 176 | 176 |
+== .docs/tickets/T-177/pruebas.md
+9: BORRADA: | `bloque_a_forex/11_Ejecutor` | 68 | 68 (sin tocar) |
+== .docs/tickets/T-178/pruebas.md
+7: ANTES: | A-Forex, B | sin tocar | sin tocar |
+7: AHORA: | B | sin tocar | sin tocar |
+33: ANTES: Ejecutados por separado (la suite de A ya se pasó completa una vez; A-Forex y B no se tocan):
+33: AHORA: Ejecutados por separado (la suite de A ya se pasó completa una vez; B no se toca):
+== .docs/tickets/T-187/pruebas.md
+35: ANTES: - `./tools/check_all.sh --core` en verde (8/8): corpus íntegro (705 archivos), nombres NFC, YAML, secretos, refs vivas y las tres suites (A 8 272 pasadas, A-Forex 68, B 176; ninguna por debajo de su línea base).
+35: AHORA: - `./tools/check_all.sh --core` en verde (8/8): corpus íntegro (705 archivos), nombres NFC, YAML, secretos, refs vivas y las tres suites (A 8 272 pasadas, B 176; ninguna por debajo de su línea base).
+== .docs/tickets/T-194/pruebas.md
+13: ANTES: | Bloques A, A-Forex, B | sin tocar | sin tocar |
+13: AHORA: | Bloques A, B | sin tocar | sin tocar |
+== .docs/tickets/T-197/pruebas.md
+7: ANTES: | A-Forex, B | sin tocar | sin tocar |
+7: AHORA: | B | sin tocar | sin tocar |
+== .docs/tickets/T-199/README.md
+17: ANTES: Búsqueda de `time.time`, `perf_counter`, `monotonic`, `process_time`, `datetime.now`, `sleep`, `timeout`, `Barrier`, `join(`, `.wait(` y `Event` (r02, H-03) en `bloque_a/11_Ejecutor/tests`, `bloque_a_forex/11_Ejecutor/tests` y `bloque_b/11_Ejecutor/tests`. A-Forex y B no tienen ninguna prueba de tiempo. En A:
+17: AHORA: Búsqueda de `time.time`, `perf_counter`, `monotonic`, `process_time`, `datetime.now`, `sleep`, `timeout`, `Barrier`, `join(`, `.wait(` y `Event` (r02, H-03) en `bloque_a/11_Ejecutor/tests` y `bloque_b/11_Ejecutor/tests`. B no tiene ninguna prueba de tiempo. En A:
+84: ANTES: | Suites de A, A-Forex y B, `check_all.sh` | regresión | CA-5 |
+84: AHORA: | Suites de A y B, `check_all.sh` | regresión | CA-5 |
+== .docs/tickets/T-199/pruebas.md
+7: ANTES: No se añaden ni se quitan pruebas: A sigue con las mismas (el gate exige ≥ 607), A-Forex 68 y B 174. `tests/tiempo_cpu.py` es un módulo auxiliar (no empieza por `test_`).
+7: AHORA: No se añaden ni se quitan pruebas: A sigue con las mismas (el gate exige ≥ 607) y B 174. `tests/tiempo_cpu.py` es un módulo auxiliar (no empieza por `test_`).
+36: ANTES: Salida (sin `tiempo_cpu.py`): A-Forex y B, nada. Cada línea de A está en la tabla del README:
+36: AHORA: Salida (sin `tiempo_cpu.py`): B, nada. Cada línea de A está en la tabla del README:
+65: ANTES: - Recuento: A suma 1 prueba (la de ST-INF-001); A-Forex y B no cambian.
+65: AHORA: - Recuento: A suma 1 prueba (la de ST-INF-001); B no cambia.
+79: ANTES: A-Forex y B: nada (solo `datetime`/`timedelta` de datos). A: las doce pruebas que medían coste, todas pasadas a CPU, y las esperas, que se quedan. La justificación de cada una está en la tabla de `README.md`. Después del cambio, `grep -rn perf_counter` en las tres carpetas de pruebas no encuentra nada.
+79: AHORA: B: nada (solo `datetime`/`timedelta` de datos). A: las doce pruebas que medían coste, todas pasadas a CPU, y las esperas, que se quedan. La justificación de cada una está en la tabla de `README.md`. Después del cambio, `grep -rn perf_counter` en las tres carpetas de pruebas no encuentra nada.
+== .docs/tickets/T-199/qa.md
+26: ANTES: | Inventario | búsqueda propia de `time.time`, `perf_counter`, `monotonic`, `process_time`, `timeout`, `sleep`, `time_ns`, `Barrier`, `join(`, `.wait(`, `Event`, `datetime.now` en las tres suites | A-Forex y B: nada. A: ningún `perf_counter` ni `time.time` que mida coste; faltan en la tabla cuatro esperas (H-03) |
+26: AHORA: | Inventario | búsqueda propia de `time.time`, `perf_counter`, `monotonic`, `process_time`, `timeout`, `sleep`, `time_ns`, `Barrier`, `join(`, `.wait(`, `Event`, `datetime.now` en las tres suites | B: nada. A: ningún `perf_counter` ni `time.time` que mida coste; faltan en la tabla cuatro esperas (H-03) |
+== .docs/tickets/T-200/pruebas.md
+24: ANTES: | A-Forex, B | sin tocar | sin tocar |
+24: AHORA: | B | sin tocar | sin tocar |
+== .docs/tickets/T-53/pruebas.md
+7: ANTES: | Bloque A Forex y Bloque B | 68 · 141 | 68 · 141 (no se tocan) |
+7: AHORA: | Bloque B | 141 | 141 (no se toca) |
+== .docs/tickets/T-61/pruebas.md
+31: ANTES: - A: 58 pruebas. A Forex: 68. B: 133 frente a 118 en la misma base antes del traslado.
+31: AHORA: - A: 58 pruebas. B: 133 frente a 118 en la misma base antes del traslado.
+== .docs/tickets/T-65/README.md
+147: ANTES: 6. CA-6: no se toca `sistema_global/`, `bloque_b/`, `bloque_a_forex/`, `.docs/memoria/`, el diario ni la deuda técnica; el corpus congelado no cambia.
+147: AHORA: 6. CA-6: no se toca `sistema_global/`, `bloque_b/`, `.docs/memoria/`, el diario ni la deuda técnica; el corpus congelado no cambia.
+== .docs/tickets/T-65/pruebas.md
+10: ANTES: | `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
+10: AHORA: | `bloque_b` | 174 | sin tocar (en el gate) |
+== .docs/tickets/T-66/pruebas.md
+6: ANTES: | Bloque A Forex y Bloque B | 68 · 141 | 68 · 141 (no se tocan) |
+6: AHORA: | Bloque B | 141 | 141 (no se toca) |
+== .docs/tickets/T-79/pruebas.md
+6: ANTES: | Bloques A, A Forex y B | 201 · 68 · 174 | — | 201 · 68 · 174 (no se tocan) |
+6: AHORA: | Bloques A y B | 201 · 174 | — | 201 · 174 (no se tocan) |
+== .docs/tickets/T-92/pruebas.md
+27: BORRADA:   - A-Forex: 68;
+== .docs/tickets/T-92/qa.md
+248: ANTES: - **Todo el Bloque A pasa por la función común.** No queda ningún uso de `RE_SECRETO` en `bloque_a/` fuera de `secretos_en_texto`. Forex y B tienen sus propios patrones, sin cambios.
+248: AHORA: - **Todo el Bloque A pasa por la función común.** No queda ningún uso de `RE_SECRETO` en `bloque_a/` fuera de `secretos_en_texto`. B tiene sus propios patrones, sin cambios.
+== .docs/tickets/T-94/qa.md
+146: ANTES: | CA-8 | sí | `r01_06`: `git status` de `bloque_a`, `bloque_b`, `bloque_a_forex`, `sistema_global/marco_comun_c` y «.docs/experimentos» igual antes y después; `git status` y `git diff` del worktree de mutantes vacíos tras los 46 mutantes |
+146: AHORA: | CA-8 | sí | `r01_06`: `git status` de `bloque_a`, `bloque_b`, `sistema_global/marco_comun_c` y «.docs/experimentos» igual antes y después; `git status` y `git diff` del worktree de mutantes vacíos tras los 46 mutantes |
+== .docs/tickets/T-97/README.md
+53: ANTES:   - los bloques A, A-Forex y B, y la Constitución.
+53: AHORA:   - los bloques A y B, y la Constitución.
+91: ANTES: 10. CA-10: no cambia ningún fichero de los bloques A, A-Forex ni B, ni de la Constitución.
+91: AHORA: 10. CA-10: no cambia ningún fichero de los bloques A ni B, ni de la Constitución.
+== .docs/tickets/T-97/qa.md
+56: ANTES: | CA-10 | sí | `git show --stat 5d03192` no toca ningún archivo de `bloque_a/`, `bloque_a_forex/`, `bloque_b/` ni `sistema_global/constitucion/`. |
+56: AHORA: | CA-10 | sí | `git show --stat 5d03192` no toca ningún archivo de `bloque_a/`, `bloque_b/` ni `sistema_global/constitucion/`. |
+== .docs/tickets/_relevo/2026-11-11_relevo_nuevo_chat.md
+60: BORRADA: | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
+== .docs/tickets/_relevo/plan_noche_bloque_a_2026-11-15.md
+8: BORRADA: - A-Forex;
+107 líneas que cambiarían

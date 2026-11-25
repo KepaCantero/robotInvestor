@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Bloque A (`bloque_a/11_Ejecutor/tests`) | 58 | 117 (`test_t53_seleccion_y_entrega.py`: 32, 14 de ellas de la QA · `test_t53_evaluacion_y_almacen.py`: 27) |
 | Herramientas de referencia (`bloque_a/10_Herramientas/tests`) | 135 | 135, sin cambios en las pruebas y en verde con HT-03 y HT-09 corregidas |
-| Bloque A Forex y Bloque B | 68 · 141 | 68 · 141 (no se tocan) |
+| Bloque B | 141 | 141 (no se toca) |
 
 ## Criterio de aceptación → prueba
 

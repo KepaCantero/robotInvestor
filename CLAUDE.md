@@ -1,14 +1,15 @@
-# robotInvestor — Robot Investor multi-bloque (A · A Forex · B)
+# robotInvestor — Robot Investor multi-bloque (A · B)
 
-Monorepo con los tres bloques del sistema Robot Investor, implementados con Claude Code
+Monorepo con los dos bloques del sistema Robot Investor, implementados con Claude Code
 como desarrollador. Cada entrega es la **fuente de verdad** de su bloque; este archivo es
 el protocolo de trabajo común.
 
 | Carpeta | Bloque | Entrega | Ejecutor (comando) | Línea base tests |
 |---|---|---|---|---|
 | `bloque_a/` | Buscador de oportunidades (12 tipos de activo) | V5.1 (03-11-2026) | `bloque-a` | 607 |
-| `bloque_a_forex/` | Buscador de oportunidades de divisas | V1.1 (03-11-2026) | `bloque-a-forex` | 68 |
 | `bloque_b/` | Selección de activos por mercado (encargos del Bloque A) | V2.1 (03-11-2026) | `bloque-b` | 174 |
+
+El Bloque A Forex se eliminó del repositorio el 25-11-2026 por orden del operador (T-204); las divisas las cubre el Bloque A.
 
 Por encima de los bloques, `sistema_global/` contiene la Constitución global del Robot Investor
 (`sistema_global/constitucion/Constitucion_Global.md`, fuente de verdad de todo el sistema), el código
@@ -35,10 +36,10 @@ Lectura mínima obligatoria antes de tocar el código de un bloque:
 3. `bloque_x/01_Gobernanza/Documento 0 - Protocolo maestro….md` (la constitución del
    bloque: reglas R, contratos CT, archivos F, ciclos, horizontes, Anexos A/B).
 
-Flujo entre bloques: el Bloque A (y el Forex) detectan ámbitos y emiten **encargos**;
+Flujo entre bloques: el Bloque A detecta ámbitos y emite **encargos**;
 el Bloque B recibe el encargo, estudia el mercado y elige los activos. El ejecutor A
 emite `senales.csv` / `pronosticos.csv` / `metricas.json` pensados para un backtester
-externo (robotTrading). En V5.1/V1.1 ambos A comparten: CT-23 consulta al Broker,
+externo (robotTrading). En V5.1 el A tiene: CT-23 consulta al Broker,
 CT-24 seguimiento encargado (ciclo C6, F11), CT-25 credenciales con bóveda en HT-01,
 H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19).
 
@@ -57,7 +58,7 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
    nunca al revés.
 4. **Mock antes que API.** Toda funcionalidad nueva se valida primero con
    `--cliente mock` (coste cero, reproducible). La API real solo en modo sombra.
-5. **Nada cuenta como hecho sin tests.** Líneas base: A 607 (desde T-102, 12-11-2026), A-Forex 68, B 174 (desde T-64), 10-11-2026. Ninguna
+5. **Nada cuenta como hecho sin tests.** Líneas base: A 607 (desde T-102, 12-11-2026), B 174 (desde T-64), 10-11-2026. Ninguna
    fase puede dejar su suite por debajo. Cada contrato/ficha nueva añade sus pruebas.
 6. **F7/F8/F9 (y equivalentes) son almacenes indexados**, no contexto: se accede por
    identificador (RF-xxxx, TM-xx…), nunca se cargan enteros (7.000–11.000 líneas).
@@ -65,7 +66,7 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
    (`docs/incidencias.md`), no se decide en silencio.
 8. **No mezclar bloques en una misma fase** salvo la interfaz de encargos (A→B), que es
    la única frontera que se toca por los dos lados y con esquemas congelados de ambos.
-9. **Una fase no cierra sin `./tools/check_all.sh` en verde (12/12)** y con las cuotas
+9. **Una fase no cierra sin `./tools/check_all.sh` en verde (10/10)** y con las cuotas
    (si se tocaron) más bajas que como se encontraron.
 
 ## Trampas conocidas de los corpus (auditadas 03-11-2026)
@@ -79,10 +80,9 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
   queda ninguna ficha en DOCUMENTADO (81 IMPLEMENTADO, ninguna VALIDADO). `DOCUMENTADAS_CON_CODIGO` (T-65 CS-08) está vacío desde T-112, y VOL-GARCH-001 depende de `arch`. Una ficha conocida sin
   manejador responde `METODO_NO_IMPLEMENTADO`; una ajena al catálogo, `OPERACION_SIN_FICHA`. Una alternativa
   solo se anuncia si se sirve. → Fase 0 de bloque_a.
-- **Versión sin subir en pyprojects (INC-001/002):** `bloque_a/11_Ejecutor` declara
-  1.2.0 desde T-167 (decidido por delegación del operador; una prueba lo ata al README);
-  `bloque_a_forex/11_Ejecutor` sigue en 1.0.0 (README dice V1.1). El código entregado ES
-  el de la versión del README. No corregir en silencio.
+- **Versión sin subir en pyprojects (INC-001):** `bloque_a/11_Ejecutor` declara
+  1.2.0 desde T-167 (decidido por delegación del operador; una prueba lo ata al README).
+  El código entregado ES el de la versión del README. No corregir en silencio.
 - **Numeración F ≠ nombre de archivo** (p. ej. F7 = "Documentación para el
   Analizador…"). Verificar siempre el H1 del archivo en `05_Archivos_operativos`.
 - **Identificadores de modelo sin verificar:** los `config/por_defecto.yaml` usan
@@ -90,17 +90,17 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
   comprobarlos en la página de modelos de Anthropic antes de usar la API real.
 - **macOS NFD:** las carpetas extraídas de entregas pueden traer nombres NFD que rompen
   las comparaciones NFC del código. Al recargar una entrega, renormalizar siempre
-  (hecho en las tres cargas actuales).
+  (hecho en las cargas actuales).
 
-## Plan de fases (por bloque; orden A → A-Forex → B en lo transversal)
+## Plan de fases (por bloque; orden A → B en lo transversal)
 
 | Fase | Contenido | Kit de contexto |
 |---|---|---|
 | 0 (bloque_a) | Verificador de consistencia de IDs (CT/R/F/RF/fichas) + resolver skew V4.0↔V5.0 | Documento 0, Catálogo V5.0, `servicio.py` |
 | 1 (bloque_a) | Implementar las 21 fichas V5.0 (IDX, FON, DER, MON, TCV) | Catálogo V5.0, `motor/operaciones.py` |
 | 2 (bloque_a) | Fichas restantes DOCUMENTADO por prioridad P0/P1 | Ídem, por familias |
-| 3 (ambos A) | Esquemas congelados (goldens) para los contratos CT | Anexo B, `contratos.py` |
-| 4 (todos) | Ejecutar los planes de pruebas y registrar evidencias (A: 67 · A-Forex: 86 · B: 204) | `09_Pruebas/` de cada bloque |
+| 3 (bloque_a) | Esquemas congelados (goldens) para los contratos CT | Anexo B, `contratos.py` |
+| 4 (todos) | Ejecutar los planes de pruebas y registrar evidencias (A: 67 · B: 204) | `09_Pruebas/` de cada bloque |
 | 5 (todos) | Modo sombra real con API (ciclo semanal, sin entrega al Broker) | `11_Ejecutor/README.md` + config de cada bloque |
 | 6 (A→B) | Cadena de encargos A→B real y conexión al backtester de robotTrading (`senales.csv`, `pronosticos.csv`, `metricas.json`) | READMEs de ejecutores + esquemas de encargo |
 
@@ -110,23 +110,23 @@ MCPs); no reinventar su contenido: se pegan tal cual.
 
 ## Calidad (gates transplantados de robotTrading)
 
-**`./tools/check_all.sh` es EL gate del repo. Una fase no cierra sin él en verde (12/12).**
+**`./tools/check_all.sh` es EL gate del repo. Una fase no cierra sin él en verde (10/10).**
 Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fallo, CI),
 `--update-corpus` (re-congelado del corpus, ver abajo).
 
 | Gate | Qué protege |
 |---|---|
-| corpus-integridad | El corpus canónico congelado por hash (705 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
+| corpus-integridad | El corpus canónico congelado por hash (525 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
 | nombres-nfc | Lección macOS pagada 2×: nombres NFD rompen tests que en Linux pasan. |
-| yaml-configs | Los 3 `por_defecto.yaml` parsean. |
+| yaml-configs | Los 2 `por_defecto.yaml` parsean. |
 | secrets | Repo público: patrones reales con allowlist explícita (`tools/secrets_allowlist.txt`, solo cadadas verificadas a mano). |
 | refs-vivas | Rutas citadas en CLAUDE.md/prompts/docs existen — antídoto contra planes rancios. Entregables futuros: `tools/refs_allowlist.txt` (quitar la línea al aterrizar la fase). |
-| ruff, mypy ×3 | **Cuotas (ratchet): solo bajan.** El código entregado no era limpio (ruff 3490, mypy A 135 / FX 174 / B 160); las cuotas congelan el estado y cada fase debe dejarlas más bajas si toca el paquete. Al llegar a 0, la línea se borra y el gate se vuelve estricto. Andamiaje temporal — política sin-deuda. |
-| pytest ×3 | Líneas base innegociables: A ≥ 607 · FX ≥ 68 · B ≥ 174 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
+| ruff, mypy ×2 | **Cuotas (ratchet): solo bajan.** El código entregado no era limpio (mypy A 135 / B 160); las cuotas congelan el estado y cada fase debe dejarlas más bajas si toca el paquete. Al llegar a 0, la línea se borra y el gate se vuelve estricto. Andamiaje temporal — política sin-deuda. |
+| pytest ×2 | Líneas base innegociables: A ≥ 607 · B ≥ 174 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
 
 **Pre-commit** (opcional, fuera del entorno fijado: `pipx install pre-commit` y `pre-commit install`): check-yaml, merge-conflicts,
-debug-statements, detect-secrets con `.secrets.baseline` (48 hallazgos auditados como
-falsos el 03-11: fixtures de tests y huellas hex de salidas simuladas — verificados a
+debug-statements, detect-secrets con `.secrets.baseline` (43 hallazgos, auditados como
+falsos el 03-11 —eran 48; T-204 quitó los 5 del Forex—: fixtures de tests y huellas hex de salidas simuladas — verificados a
 mano). Los fixers de espacios SOLO tocan lo nuestro (`docs/`, `prompts/`, `tools/`,
 `CLAUDE.md`): el paquete entregado ni un espacio se le toca.
 
@@ -142,12 +142,11 @@ propietario (o una sesión coordinadora) hace commit.
 # venv único del proyecto (Python 3.12), con las versiones fijadas en tools/requisitos_entorno.txt (T-96):
 .docs/scripts/preparar_entorno.sh             # crea .venv e instala ejecutores, herramientas y opcionales; --comprobar solo compara
 source .venv/bin/activate
-# Las cuotas de ruff y mypy dependen de esas versiones (arch 9.0.0 suma 2 errores de mypy en A y en A-Forex).
+# Las cuotas de ruff y mypy dependen de esas versiones (arch 9.0.0 suma 2 errores de mypy en A).
 # Registro de experimentos (T-99): cada sesión anota en el suyo. Exporta RI_AGENTE (claude por defecto; dos sesiones de
 # Claude en máquinas distintas, valores distintos, p. ej. claude-nube). El sello del registro es local y no se sube.
 
 pytest -q bloque_a/11_Ejecutor        # 607
-pytest -q bloque_a_forex/11_Ejecutor  # 68 (≈5 min: backtests simulados)
 pytest -q bloque_b/11_Ejecutor        # 174
 
 # Ciclo simulado sin coste (ejemplo bloque_a; los demás análogos, ver su README)

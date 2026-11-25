@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Crea o comprueba el entorno del proyecto (.venv) con las versiones fijadas en tools/requisitos_entorno.txt (T-96).
-# Uso: preparar_entorno.sh              crea .venv si no existe, instala los tres ejecutores y las herramientas, y comprueba
+# Uso: preparar_entorno.sh              crea .venv si no existe, instala los dos ejecutores y las herramientas, y comprueba
 #      preparar_entorno.sh --comprobar  solo compara lo instalado en .venv con el fichero
 # Python: el de PYTHON_ENTORNO, o python3.12 del PATH, o ~/.local/bin/python3.12. Tiene que ser 3.12.
 # Falla cerrado: si falta Python 3.12, si pip no instala una versión fijada o si lo instalado no coincide.
@@ -84,9 +84,9 @@ if [[ ! -x "$VENV/bin/python" ]]; then
 fi
 valida_venv
 
-aviso "instalando los tres ejecutores y las herramientas con las versiones de $REQ"
+aviso "instalando los dos ejecutores (A y B) y las herramientas con las versiones de $REQ"
 "$VENV/bin/python" -m pip install -q -c "$REQ" \
-  -e bloque_a/11_Ejecutor -e bloque_a_forex/11_Ejecutor -e bloque_b/11_Ejecutor \
+  -e bloque_a/11_Ejecutor -e bloque_b/11_Ejecutor \
   arch openpyxl python-docx ruff mypy pytest pyyaml jsonschema \
   || fallo "pip no pudo instalar las versiones fijadas"
 comprobar

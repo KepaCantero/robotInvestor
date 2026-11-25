@@ -1,0 +1,16 @@
+== .docs/tickets/T-196/pruebas.md
+7: ANTES: | A-Forex, B | sin tocar | sin tocar |
+7: AHORA: | B | sin tocar | sin tocar |
+== .docs/tickets/T-201/pruebas.md
+7: ANTES: | A-Forex, B | sin tocar | sin tocar |
+7: AHORA: | B | sin tocar | sin tocar |
+== .docs/tickets/T-203/pruebas.md
+9: ANTES: | A-Forex, B | sin tocar | sin tocar |
+9: AHORA: | B | sin tocar | sin tocar |
+== .docs/tickets/T-203/qa.md
+54: ANTES: | 3. Reexportaciones | `r01_02_reexportaciones.py`: con `ast`, los nombres de módulo que desaparecen en cada `.py` tocado y sus usos en todo el repo (A, A-Forex, B, `sistema_global`, `tools`, `.docs`): `from … import`, `import *`, `alias.nombre` y cadenas | desaparecen `Dict`, `List`, `Optional`, `Tuple` (`operaciones`, `mock_respuestas`) y, en pruebas, `Evaluador`, `Path`, `nuevo_bloque`, `AS_OF`, `pd`: **0 usos**. Grep además en `origin/astra/encargos-bloque-a-c38-c47`, `wip/t196`, `wip/t201`, `wip/t202`: nadie toma esos nombres de esos módulos |
+54: AHORA: | 3. Reexportaciones | `r01_02_reexportaciones.py`: con `ast`, los nombres de módulo que desaparecen en cada `.py` tocado y sus usos en todo el repo (A, B, `sistema_global`, `tools`, `.docs`): `from … import`, `import *`, `alias.nombre` y cadenas | desaparecen `Dict`, `List`, `Optional`, `Tuple` (`operaciones`, `mock_respuestas`) y, en pruebas, `Evaluador`, `Path`, `nuevo_bloque`, `AS_OF`, `pd`: **0 usos**. Grep además en `origin/astra/encargos-bloque-a-c38-c47`, `wip/t196`, `wip/t201`, `wip/t202`: nadie toma esos nombres de esos módulos |
+== .docs/tickets/T-205/pruebas.md
+6: ANTES: | A-Forex, B | sin tocar | sin tocar |
+6: AHORA: | B | sin tocar | sin tocar |
+5 líneas que cambiarían

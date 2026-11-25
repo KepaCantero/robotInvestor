@@ -21,7 +21,7 @@ Intérprete `/home/user/robotinvestor/.venv/bin/python` (PY). Desde la raíz de 
 | `revisores/impl_mutantes.py bloque_a/11_Ejecutor <scratchpad>/qa16_mut/t135_mut --base eb66257` | REV: 16 de 28 pruebas nuevas fallan con los módulos de `eb66257`; 27 mutantes, **ninguno vivo** |
 | Mis scripts: `revisores/r01_01_copias_idx_conc.py` y `r01_02_aviso_firmas.py` (con `python -I`, argumento `bloque_a/11_Ejecutor`) | `r01_01`: 34 ok · 5 hallazgos (H-01 ×4, H-04); `r01_02`: 20 ok · 4 hallazgos (H-02 ×2, H-04 ×2). `r01_02` contra `eb66257` (con `git archive` en una carpeta desechable) para comparar antes y después |
 
-No se lanzó `./tools/check_all.sh` (instrucción de la coordinación), ni las suites de A-Forex y B.
+No se lanzó `./tools/check_all.sh` (instrucción de la coordinación), ni la suite de B.
 
 ## Criterios de aceptación
 

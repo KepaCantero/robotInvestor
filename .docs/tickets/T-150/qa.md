@@ -62,7 +62,7 @@ Scripts de esta ronda, en `revisores/` (desde la raíz de la copia, en este orde
 4. `.venv/bin/python .docs/tickets/T-150/revisores/r01_04_mutantes_qa.py <copia desechable con «t147_mut»> [--grupo FB|CB|CAB|BCE]`: 20 mutantes propios; termina con 1 por X01, X02, Y01, Z03 y W01 (H-01, H-02; X02 casi equivalente, O-03).
 5. `.venv/bin/python -I .docs/tickets/T-150/revisores/r01_05_umbral_qa.py [--semillas N]`: el umbral de hoy frente a X01 (H-02); solo informa, termina con 0.
 
-No comprobado: `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; la descarga real del BCE (solo con dobles); IDX-CONC-001 con datos de mercado reales (solo series sintéticas); `T-150/medir_truncado.py` y `T-149/medir_copias.py` con 300 semillas (medí lo mío con 60 y 100).
+No comprobado: `./tools/check_all.sh` entero, B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; la descarga real del BCE (solo con dobles); IDX-CONC-001 con datos de mercado reales (solo series sintéticas); `T-150/medir_truncado.py` y `T-149/medir_copias.py` con 300 semillas (medí lo mío con 60 y 100).
 
 ## Veredicto
 

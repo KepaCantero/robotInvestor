@@ -53,7 +53,7 @@ python3 -I r01_mutantes.py <copia del marco con _mut> <marco V0.73> estado_v073.
 | CA-7 | sí | `r01_migracion_v073.py` sobre un estado **guardado con la V0.73 de verdad**: la cadena es `MIG-010, MIG-011` y `integridad()` sale vacía. Recibe las ocho claves con su valor (0,5; None; USD, GBP, JPY y CHF; 0,005; 25; 4; 5 y 5) y conserva todos los valores personalizados de `cfg` y de la política (ninguna otra clave cambia); `CFG-0.12.0`; el gasto y los expedientes se conservan. `_v074` es idempotente. Un estado tocado sin rehacer la huella da PE-02, y con la huella rehecha, MG-02. Un estado de hoy disfrazado de V0.74 tampoco pasa (MG-02). Un estado **guardado con la V0.74 de verdad** migra solo con MIG-011, con `cfg` idéntica e integridad vacía. La autorización hecha con la V0.73 ya no vale tras migrar (O-05: vuelve a F y al operador): es la regla de la V0.46 para las migraciones que cambian la configuración, y falla cerrado. |
 | CA-8 | sí | `parametros_doc.faltan() == []` y `desfasados() == []`. Las ocho claves están como `PROPUESTO`, con fuente `Deuda T-97`/`V0.74`, justificación, pregunta y `valor_documentado` correcto. `pruebas_parametros_doc_t83.py` da 109. |
 | CA-9 | sí | 62 baterías en verde, LEEME sin diferencias y gate del repositorio 12/12 en el worktree limpio. |
-| CA-10 | sí | `git show --stat 5d03192` no toca ningún archivo de `bloque_a/`, `bloque_a_forex/`, `bloque_b/` ni `sistema_global/constitucion/`. |
+| CA-10 | sí | `git show --stat 5d03192` no toca ningún archivo de `bloque_a/`, `bloque_b/` ni `sistema_global/constitucion/`. |
 
 ## Invariantes
 

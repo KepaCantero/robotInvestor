@@ -4,7 +4,6 @@
 | --- | --- | --- |
 | Bloque A, pytest (recogidas) | 7975 | 7984 (+9, `tests/test_t175_alternativas.py`) |
 | Bloque A, en el gate | — | 7982 superadas (las 2 restantes son omisiones previas, `skipif`/`skip`); base 607 |
-| Bloque A-Forex, en el gate | 68 | 68 |
 | Bloque B, en el gate | 176 | 176 |
 | Relacionadas (`test_t165_g3_met13`, `test_autocritica`, `test_integracion`, `test_fase3_goldens`, `test_t53_seleccion_y_entrega`) | — | 388 superadas |
 | Plan de pruebas (`evidencias_plan_a.py --ejecutar`) | Superada 32 · en parte 26 | Superada 33 · en parte 25 (PB-38); 216 de 216 citadas superadas |
@@ -67,7 +66,7 @@ python -m bloque_a.cli --cliente mock --datos ejemplos/datos_sinteticos --univer
 | --- | --- | --- |
 | Bloque A, pytest (recogidas) | 8149 | 8160 (+11: `test_t175_alternativas.py`, con la prueba de H-01 en dos variantes) |
 | Bloque A, en el gate | — | 8158 superadas (2 omisiones previas) |
-| A-Forex · B, en el gate | 68 · 176 | 68 · 176 |
+| B, en el gate | 176 | 176 |
 | `test_t165_g3_met13` + `test_t175_alternativas` + `test_autocritica` | — | 160 superadas |
 | Plan de pruebas (`--ejecutar`) | — | 217 de 217 citadas superadas · Superada 33 · en parte 25 |
 | Mutantes propios | — | 22/22 muertos (los 12 de la r01, 6 de H-01 y 4 de H-02) |

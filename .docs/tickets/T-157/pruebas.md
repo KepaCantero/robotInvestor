@@ -5,7 +5,7 @@
 | Bloque A (`bloque_a/11_Ejecutor`, completa) | 6624 superadas, 2 omitidas, 0 fallos (6626 recogidas; 36 min 53 s) | 6660 recogidas: las 6626 de antes, sin cambios, más las 34 de `tests/test_t157_verificador_ids.py`, que pasan |
 | `tests/test_t157_verificador_ids.py` | — (no existía) | 34 superadas (7 s) |
 | Suites que leen `docs/incidencias.md` o los README (`test_t65_resto_t53`, `test_fase3_goldens`, `test_t148`), otra vez con los cambios | en verde | 185 superadas, junto con las 34 nuevas |
-| Bloque A Forex, Bloque B | no se tocan | no se ejecutan (regla 8; ningún archivo suyo cambia) |
+| Bloque B | no se tocan | no se ejecutan (regla 8; ningún archivo suyo cambia) |
 
 La pasada completa se lanzó en el commit `4f7ea73`, antes de añadir la prueba nueva. El cambio no toca código existente: es
 un módulo nuevo que ninguna otra prueba importa, más documentación. Por eso no se repitió la suite entera (≈37 min); sí se

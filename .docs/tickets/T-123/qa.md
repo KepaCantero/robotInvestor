@@ -53,7 +53,7 @@ Pero queda un hallazgo **alto**, **H-02**: el patrón de tarjeta marca tramos de
 
 Vuelve a `ri-implementar`: H-02 y H-01 con sus pruebas (100 000 huellas y UUID sin marcar; caducidad, CVV, IBAN + cifra y prefijo AB12 marcados), y `pruebas.md` rellenado. En la r02 se vuelven a ejecutar `r01_01` a `r01_03`.
 
-**Sin comprobar:** el gate entero; las suites de A-Forex y B (el Forex tiene su propia copia de `RE_SECRETO` y no se toca); mensajes de un ciclo con el modelo real.
+**Sin comprobar:** el gate entero; la suite de B; mensajes de un ciclo con el modelo real.
 
 ---
 
@@ -126,4 +126,4 @@ Orden para comparar con la r01 lo que da H-07 (también lo hace `r02_01`): desde
 
 Los cuatro hallazgos de la r01 están corregidos (H-02, el alto, con 0 de 100 000 huellas y 0 de 3 000 UUID) y los cinco criterios se cumplen (CA-5 sin el gate entero, que no lancé por instrucción; pasó en el commit). No queda ningún hallazgo crítico ni alto. Quedan cuatro medios y dos bajos, que pasan a la deuda con su ID: **H-05** (tarjeta tras una coma o un punto sin cifras, p. ej. una fila CSV, sin detectar), **H-06** (IBAN «encadenado» con palabras tras un ISIN o un nombre de índice, ≈ 0,3 % por mención, y huellas truncadas de 16 caracteres del sistema, ≈ 4 de cada 100 000), **H-07** (regresión de la r02: series de enteros de cuatro cifras separadas por dos espacios o saltos de línea, del 0 % al 11 %), **H-08** (coste cuadrático de `ibanes_en_texto`, contra lo que dice `analisis-tecnico.md`), **H-09** y **H-10** (bajos). H-05 y H-08 tienen una corrección de una línea; conviene hacerlas antes del modo sombra.
 
-**Sin comprobar:** el gate entero; A-Forex y B; mensajes de un ciclo con el modelo real; las redes Diners y Maestro y el formato con puntos (fuera de lo declarado, como en la r01).
+**Sin comprobar:** el gate entero; B; mensajes de un ciclo con el modelo real; las redes Diners y Maestro y el formato con puntos (fuera de lo declarado, como en la r01).

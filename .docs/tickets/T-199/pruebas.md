@@ -4,7 +4,7 @@ Todo desde `bloque_a/11_Ejecutor`, sin red ni coste, con el `.venv` del proyecto
 
 ## Recuento
 
-No se añaden ni se quitan pruebas: A sigue con las mismas (el gate exige ≥ 607), A-Forex 68 y B 174. `tests/tiempo_cpu.py` es un módulo auxiliar (no empieza por `test_`).
+No se añaden ni se quitan pruebas: A sigue con las mismas (el gate exige ≥ 607) y B 174. `tests/tiempo_cpu.py` es un módulo auxiliar (no empieza por `test_`).
 
 ## Ronda r02 (QA r01 NO APTO: H-01 a H-04)
 
@@ -33,7 +33,7 @@ grep -rnE "perf_counter|monotonic|process_time|time\.time|datetime\.now|\.sleep\
   --include=*.py bloque_a/11_Ejecutor/tests bloque_a_forex/11_Ejecutor/tests bloque_b/11_Ejecutor/tests
 ```
 
-Salida (sin `tiempo_cpu.py`): A-Forex y B, nada. Cada línea de A está en la tabla del README:
+Salida (sin `tiempo_cpu.py`): B, nada. Cada línea de A está en la tabla del README:
 - T-151 y T-154: `timeout` simulado.
 - T-147, T-149 y T-150: `falso(url, timeout=None)`.
 - T-106: `time_ns`.
@@ -62,7 +62,7 @@ Ninguna línea queda fuera de la tabla.
 
 - `mutantes.py . --originales`, sin carga artificial (carga natural 4–8): las 17 originales pasan y **M01 a M15 están MUERTOS**, con `exit 0`. Con carga 11,6–20: las 17 originales pasan y M14 a M19 están MUERTOS.
 - Tanda estrangulada al 10 % con carga 18–19 (la de `r01_05`, más las cuatro de T-102 y la nueva de ST-INF): **17 de 17 pasan** en 186 s.
-- Recuento: A suma 1 prueba (la de ST-INF-001); A-Forex y B no cambian.
+- Recuento: A suma 1 prueba (la de ST-INF-001); B no cambia.
 - ruff: 2806, igual (la corrección de imports de `test_t102_filtro.py` no deja hallazgo nuevo); cuota 2806.
 
 ### Gate (r02)
@@ -76,7 +76,7 @@ grep -rnE "perf_counter|monotonic|process_time|time\.time|import time|datetime\.
   --include=*.py bloque_a/11_Ejecutor/tests bloque_a_forex/11_Ejecutor/tests bloque_b/11_Ejecutor/tests
 ```
 
-A-Forex y B: nada (solo `datetime`/`timedelta` de datos). A: las doce pruebas que medían coste, todas pasadas a CPU, y las esperas, que se quedan. La justificación de cada una está en la tabla de `README.md`. Después del cambio, `grep -rn perf_counter` en las tres carpetas de pruebas no encuentra nada.
+B: nada (solo `datetime`/`timedelta` de datos). A: las doce pruebas que medían coste, todas pasadas a CPU, y las esperas, que se quedan. La justificación de cada una está en la tabla de `README.md`. Después del cambio, `grep -rn perf_counter` en las tres carpetas de pruebas no encuentra nada.
 
 ## Carga artificial
 

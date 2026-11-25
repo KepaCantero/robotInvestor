@@ -19,7 +19,6 @@ editable instalado del árbol principal (lo confirma la sonda de `r01_01`).
 | ruff de los tres ejecutores · mypy `bloque_a` | 2813 (cuota 2813) · 109 (cuota 109): iguales |
 | `ruff check` de `test_t167_version.py` y `__init__.py` | sin avisos |
 | `.docs/scripts/preparar_entorno.sh --comprobar` (árbol principal) | conforme (49 paquetes): compara con `pip freeze --exclude-editable`, la versión del propio paquete no entra |
-| `git diff --stat HEAD -- bloque_a_forex` | vacío: A-Forex no se toca (sigue en 1.0.0, INC-002 abierta) |
 
 Script del revisor (`revisores/`, ronda r01):
 
@@ -70,7 +69,7 @@ INC-001 cita `bloque-a --version`, que no existe (es de 03-11 y la nota nueva no
 ## Veredicto
 
 **APTO** · CA-1 a CA-4 se cumplen; la prueba ata pyproject, `__version__` y README y mata los diez mutantes; nada del repo
-depende de «1.1.0» del Bloque A; A-Forex intacto; textos de INC-001 y `CLAUDE.md` exactos. Ningún hallazgo crítico, alto ni
+depende de «1.1.0» del Bloque A; textos de INC-001 y `CLAUDE.md` exactos. Ningún hallazgo crítico, alto ni
 medio. Por la regla del operador, H-01, H-02 y H-03 (bajos) se subsanan en este ticket con una ronda de cierre (las
 correcciones de arriba) antes de pasar T-167 a CERRADO; tras H-01, repetir `ruff check` y mypy de `bloque_a` (cuotas iguales).
 

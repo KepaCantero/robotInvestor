@@ -16,7 +16,7 @@
 | Carpeta | Qué hay |
 | --- | --- |
 | `bloque_a/`, `bloque_b/` | Bloques A y B entregados (anteriores a la Constitución global; se revisan con el operador antes de conectarlos) |
-| `bloque_a_forex/` | Prueba antigua; fuera del Robot Investor |
+| `bloque_a_forex/` | Eliminado el 25-11-2026 por orden del operador (T-204) |
 | `sistema_global/` | Constitución, código de referencia de la Fase 1 (`sistema_global/marco_comun_c/`), Documentos 0 y seguimiento |
 | `tools/` | Gates del repositorio (`./tools/check_all.sh`) |
 | `.agents/skills/` | Skills del flujo de trabajo (también en `.claude/skills`) |

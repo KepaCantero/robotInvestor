@@ -70,7 +70,7 @@ Scripts de esta ronda, en `revisores/`. Se ejecutan desde la raíz de la copia; 
 
 **No comprobado:**
 - `./tools/check_all.sh` entero en esta ronda. Lo ejecutó `commit_limpio.sh` en el commit, con 12/12; aquí, solo sus piezas.
-- A-Forex y B: no se tocan.
+- B: no se tocan.
 - IDX-CONC-001 con datos de mercado reales: solo series sintéticas.
 - Los revisores de T-141, que necesitan red.
 

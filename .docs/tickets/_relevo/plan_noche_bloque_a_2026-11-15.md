@@ -5,7 +5,6 @@ Lo pidió el operador el 15-11-2026: tareas autónomas, solo para acabar de impl
 **Fuera del plan:**
 - el modo sombra, porque falta la clave de la API;
 - el Bloque B, que es de Astra;
-- A-Forex;
 - T-152, T-153 y T-155, que son de la otra sesión de Claude;
 - la versión de los pyproject (INC-001), que necesita una decisión.
 
