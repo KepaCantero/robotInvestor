@@ -1,0 +1,6 @@
+  OK    sellos: número de entradas de F1: DISTINTO (esperado DISTINTO)
+  OK    RC: huella corta de un dato: DISTINTO (esperado DISTINTO)
+  OK    consumo.csv: uc de la primera fila: DISTINTO (esperado DISTINTO)
+  OK    F3: clave nueva con nombre de latencia («latencia»): DISTINTO (esperado DISTINTO)
+  OK    sellos: solo el resumen de F1 (se enmascara a propósito): EQUIVALENTE (esperado EQUIVALENTE)
+puntos ciegos: ninguno

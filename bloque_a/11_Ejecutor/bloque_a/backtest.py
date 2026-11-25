@@ -172,7 +172,7 @@ def ejecutar_backtest(cfg: dict, desde: str, hasta: str, datos: str, universo: s
         advert.append("Cliente simulado (mock): las señales proceden de reglas sintéticas, no de un modelo de lenguaje; sirve para probar la tubería, no para medir la capacidad predictiva.")
     n_res = sum(1 for p in pron if p["estado"] == "RESUELTO")
     tot = {k: sum((c[k] or 0) for c in consumo) for k in ("llamadas", "tokens_entrada", "tokens_salida", "tokens_cache_escritura", "tokens_cache_lectura", "uc")}
-    metricas = {"periodo": {"desde": desde, "hasta": hasta, "frecuencia": frecuencia or bt.get("frecuencia", "semanal"),
+    metricas: dict = {"periodo": {"desde": desde, "hasta": hasta, "frecuencia": frecuencia or bt.get("frecuencia", "semanal"),
                             "fecha_evaluacion": str(fecha_final.date()), "ciclos": len(fechas)},
                 "advertencias": advert, "anonimizado": bool(bloque.anon),
                 "pronosticos": {"total": len(pron), "resueltos": n_res, "abiertos": sum(1 for p in pron if p["estado"] == "ABIERTO"),

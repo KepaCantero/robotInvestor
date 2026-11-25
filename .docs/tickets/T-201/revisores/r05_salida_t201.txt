@@ -1,0 +1,15 @@
+ht02: 46 nombres públicos en ejecución (sin contar módulos)
+ht03: 25 nombres públicos en ejecución (sin contar módulos)
+ht07: 25 nombres públicos en ejecución (sin contar módulos)
+ht09: 80 nombres públicos en ejecución (sin contar módulos)
+nombres de ejecución que mypy no ve (0):
+
+qa201_r05b_qa_t201/llamador_malo.py:2: error: Too many arguments for "evaluar_opcion"  [call-arg]
+qa201_r05b_qa_t201/llamador_malo.py:2: error: Argument 1 to "evaluar_opcion" has incompatible type "int"; expected "dict[Any, Any]"  [arg-type]
+qa201_r05b_qa_t201/llamador_malo.py:2: error: Argument 2 to "evaluar_opcion" has incompatible type "int"; expected "dict[Any, Any] | None"  [arg-type]
+qa201_r05b_qa_t201/llamador_malo.py:3: error: Argument "informe" to "validar_seguimiento" has incompatible type "int"; expected "dict[Any, Any]"  [arg-type]
+qa201_r05b_qa_t201/llamador_malo.py:3: error: Argument "texto_breve" to "validar_seguimiento" has incompatible type "int"; expected "str | None"  [arg-type]
+qa201_r05b_qa_t201/llamador_malo.py:4: error: Argument 1 to "analizar" has incompatible type "int"; expected "str"  [arg-type]
+qa201_r05b_qa_t201/llamador_malo.py:5: error: Incompatible types in assignment (expression has type "list[Ficha]", variable has type "int")  [assignment]
+qa201_r05b_qa_t201/llamador_malo.py:6: error: Module has no attribute "no_existe"  [attr-defined]
+llamadas mal hechas que mypy no ve: ninguna

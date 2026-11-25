@@ -1,0 +1,31 @@
+ht02: 45 nombres públicos en ejecución (sin contar módulos)
+ht03: 24 nombres públicos en ejecución (sin contar módulos)
+ht07: 24 nombres públicos en ejecución (sin contar módulos)
+ht09: 79 nombres públicos en ejecución (sin contar módulos)
+nombres de ejecución que mypy no ve (126):
+  Module has no attribute "ACCIONES"  [attr-defined]
+  Module has no attribute "COLUMNAS_CSV"  [attr-defined]
+  Module has no attribute "Config"  [attr-defined]
+  Module has no attribute "Dict"  [attr-defined]
+  Module has no attribute "ESTADOS"  [attr-defined]
+  Module has no attribute "Ficha"  [attr-defined]
+  Module has no attribute "List"  [attr-defined]
+  Module has no attribute "MARCAS_MURO"  [attr-defined]
+  Module has no attribute "MARCAS_RETRACTACION"  [attr-defined]
+  Module has no attribute "MARCAS_SOFT404"  [attr-defined]
+  Module has no attribute "Optional"  [attr-defined]
+  Module has no attribute "PRECEDENCIA"  [attr-defined]
+  Module has no attribute "RE_CAMPO"  [attr-defined]
+  Module has no attribute "RE_FICHA"  [attr-defined]
+  Module has no attribute "RE_TITULO"  [attr-defined]
+  Module has no attribute "Sequence"  [attr-defined]
+  Module has no attribute "Tuple"  [attr-defined]
+  Module has no attribute "USER_AGENT"  [attr-defined]
+  Module has no attribute "VERSION"  [attr-defined]
+  Module has no attribute "a_csv"  [attr-defined]
+qa201_r05b_qa_t201_base/llamador_malo.py:2: error: Module has no attribute "evaluar_opcion"  [attr-defined]
+qa201_r05b_qa_t201_base/llamador_malo.py:3: error: Module has no attribute "validar_seguimiento"  [attr-defined]
+qa201_r05b_qa_t201_base/llamador_malo.py:4: error: Module has no attribute "analizar"  [attr-defined]
+qa201_r05b_qa_t201_base/llamador_malo.py:5: error: Module has no attribute "leer_fichas"  [attr-defined]
+qa201_r05b_qa_t201_base/llamador_malo.py:6: error: Module has no attribute "no_existe"  [attr-defined]
+llamadas mal hechas que mypy no ve: [2, 3, 4, 5]

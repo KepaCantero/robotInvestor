@@ -65,8 +65,8 @@ def wilson(k: int, n: int, nivel: float = 0.90) -> list[float | None]:
 
 
 def acierto_direccional(o: Sequence[int], tasa_base: float = 0.5, nivel: float = 0.90) -> dict:
-    o = np.asarray(o, dtype=int)
-    n, k = len(o), int(o.sum())
+    arr = np.asarray(o, dtype=int)
+    n, k = len(arr), int(arr.sum())
     if n == 0:
         return {"n": 0, "aciertos": 0, "tasa": None, "ic": [None, None], "p_binomial": None}
     p_bin = float(stats.binomtest(k, n, p=tasa_base, alternative="greater").pvalue)

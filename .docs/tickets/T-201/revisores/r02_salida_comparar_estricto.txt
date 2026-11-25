@@ -1,0 +1,8 @@
+  OK    testigo: F3 liquidez: DISTINTO
+  OK    F3 dimensión T «duracion» (entrada de HT-03): DISTINTO
+  OK    RC «duracion_sesiones» (resultado del Motor): DISTINTO
+  OK    F4 «fecha_congelacion» (instante de dominio): DISTINTO
+  OK    F3 fecha con hora: DISTINTO
+  OK    F11 «_ts» del ciclo simulado: DISTINTO
+  OK    03_peticion.out «timestamp» del acuse: DISTINTO
+puntos ciegos: ninguno

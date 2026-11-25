@@ -1,0 +1,24 @@
+# Primera pasada (M01 contaba test_fase3_goldens; su muerte no valía: el testigo M00 falla igual en la copia)
+M01 configuracion.py: MUERTO · 1 failed, 194 passed in 348.33s (0:05:48)
+M02 configuracion.py: MUERTO · 1 failed, 13 passed in 0.24s
+M03 seguimiento.py: MUERTO · 1 failed, 19 passed in 5.47s
+M04 seguimiento.py: MUERTO · 1 failed, 20 passed in 0.48s
+M05 seguimiento.py: MUERTO · 1 failed, 28 passed in 0.73s
+M06 seguimiento.py: MUERTO · 1 failed, 30 passed in 0.86s
+M07 seguimiento.py: MUERTO · 1 failed, 23 passed in 0.70s
+M08 seguimiento.py: MUERTO · 1 failed, 31 passed in 1.72s
+M09 seguimiento.py: MUERTO · 1 failed, 15 passed in 0.75s
+M10 seguimiento.py: VIVO (equivalente: F11 nunca tiene una clave falsa: Almacen.estado se salta las entradas con `not k`) · 102 passed in 289.47s (0:04:49)
+M11 motor/servicio.py: VIVO (equivalente: inalcanzable: una ficha None se rechaza antes, en _error_de_forma) · 35 passed in 3.02s
+M12 motor/servicio.py: MUERTO · 1 failed, 34 passed in 2.25s
+M13 motor/operaciones.py: MUERTO · 1 failed, 33 passed in 1.17s
+M14 motor/operaciones.py: MUERTO · 1 failed, 33 passed in 1.22s
+M16 motor/evaluacion.py: VIVO · 35 passed in 1.33s
+M17 herramientas/ht03.py: MUERTO · 1 failed, 1 passed in 0.20s
+M18 herramientas/ht09.py: MUERTO · 1 failed, 7 passed in 0.19s
+M19 herramientas/ht02.py: MUERTO · 1 failed, 4 passed in 0.24s
+vivos no equivalentes: ['M16']
+# Testigo y M01 sin test_fase3_goldens (versión actual del script)
+M00 configuracion.py: TESTIGO pasa · 142 passed in 219.30s (0:03:39) []
+M01 configuracion.py: VIVO · 142 passed in 237.11s (0:03:57) []
+vivos no equivalentes: ['M01']

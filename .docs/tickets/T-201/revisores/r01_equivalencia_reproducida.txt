@@ -1,0 +1,10 @@
+carpeta de trabajo: qa201_tmp/t201_equivalencia.k44s
+ficheros: 89 base, 89 nuevo; idénticos sin normalizar: 62; solo en un lado: []
+distintos tras normalizar: []
+  01_backtest.out: 'lado (mock): las señales proceden de reglas sintéticas, no de un modelo de lenguaje; sirve para probar la tubería, no para medir la capacidad predictiva."\n ]\n}\n'
+  02_ciclo.out: 'f8f7f8e2ca5/scratchpad/qa201_tmp/t201_equivalencia.k44s/r_base/entregables/Paquetes JSON/2026-06-05_paquete-json_RUN-2026-0001.json"\n },\n "consumo_uc": 14.98\n}\n'
+  03_peticion.out: 'se_de": "MSG-2026-000007",\n  "asignado": "RUN-2026-0002",\n  "timestamp": "2026-06-05T06:01:06+02:00",\n  "nivel": {\n   "DIV": "N2"\n  },\n  "repetido": false\n }\n}\n'
+  04_consulta.out: '  "AG-01": {\n    "llamadas": 1,\n    "uc": 1.7691,\n    "entrada": 27724,\n    "salida": 109\n   }\n  }\n },\n "msg_id": "MSG-2026-000013",\n "respuesta_final": null\n}\n'
+  05_seg_alta.out: '{\n "seg_id": "SEG-2026-0001",\n "estado": "ACTIVO",\n "proximo_ciclo": "2026-06-12",\n "aviso": null\n}\n'
+  06_seg_ejecutar.out: '3f8f7f8e2ca5/scratchpad/qa201_tmp/t201_equivalencia.k44s/r_base/entregables/Informes de seguimiento/2026-06-12_informe-seguimiento_RUN-2026-0003.json"\n  }\n }\n]\n'
+VEREDICTO: EQUIVALENTE

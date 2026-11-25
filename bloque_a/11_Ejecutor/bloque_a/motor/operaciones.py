@@ -58,7 +58,7 @@ def descriptiva(x: Sequence[float], cuantiles=(0.05, 0.25, 0.5, 0.75, 0.95)) -> 
             "cuantiles": q, "atipicos_3_robustas": atipicos}
 
 
-def posicion_historica(valor: float, historia: Sequence[float]) -> Dict:
+def posicion_historica(valor: float, historia: Sequence[float] | np.ndarray) -> Dict:
     """z-score y percentil histórico del valor frente a su historia (ST-DESC-001, posición)."""
     h = _arr(historia)
     if len(h) < 5:
@@ -297,7 +297,8 @@ def clusteres(rend: pd.DataFrame, umbral_rho: float = 0.7) -> Dict:
     z = linkage(squareform(d, checks=False), method="average")
     etiquetas = fcluster(z, t=math.sqrt(2 * (1 - umbral_rho)), criterion="distance")
     # renumeración estable por orden de aparición
-    mapa, asign = {}, {}
+    mapa: dict[int, int] = {}
+    asign = {}
     for col, e in zip(cols, etiquetas):
         mapa.setdefault(int(e), len(mapa) + 1)
         asign[col] = mapa[int(e)]
@@ -339,10 +340,11 @@ def diferencial_rentabilidades(rend_activo: float, rend_referencia: float, histo
                                en_pb: bool = False) -> Dict:
     """Diferencial (p. ej., earnings yield − rendimiento real del bono, o cap rate − bono) y su posición."""
     dif = rend_activo - rend_referencia
-    out = {"diferencial": dif * (10000 if en_pb else 100), "unidad": "pb" if en_pb else "pp"}
+    diferencial = dif * (10000 if en_pb else 100)
+    out: dict[str, float | str] = {"diferencial": diferencial, "unidad": "pb" if en_pb else "pp"}
     if historia is not None and len(_arr(historia)) >= 5:
         h = _arr(historia) * (10000 if en_pb else 100)
-        out.update({f"{k}_historico": v for k, v in posicion_historica(out["diferencial"], h).items()})
+        out.update({f"{k}_historico": v for k, v in posicion_historica(diferencial, h).items()})
     return out
 
 

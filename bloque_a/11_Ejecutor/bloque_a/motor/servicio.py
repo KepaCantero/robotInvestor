@@ -523,7 +523,7 @@ class Motor:
         return ent
 
     def _resolver_datos(self, datos: list[dict], fecha_corte) -> tuple[dict, list[dict]]:
-        ent = {"series": {}, "series_rol": {}, "valores": {}}
+        ent: dict[str, dict] = {"series": {}, "series_rol": {}, "valores": {}}
         efectivos = []
         for d in datos:
             if "serie" in d:
@@ -648,7 +648,7 @@ class Motor:
         # 1) Ficha
         if not servible(ficha, self.raiz):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"
-            alt = ALTERNATIVAS.get(ficha)
+            alt = ALTERNATIVAS.get(ficha) if ficha is not None else None   # T-201: ALTERNATIVAS no tiene la clave None
             alt = alt if alt and servible(alt, self.raiz) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
             if ficha == "VOL-GARCH-001" and citable_segun_catalogo(ficha, self.raiz) and not garch_disponible():
                 detalle = "Ficha VOL-GARCH-001: falta la dependencia opcional `arch` en el entorno"   # H-12
@@ -693,12 +693,12 @@ class Motor:
                        or clave_hash(_configuracion_usada(self.cfg, marca[1])) != marca[2]):
             previo = None
         if previo:
-            e = self.almacen.escribir("RC", "AG-13", {**base, "tipo_entrada": "CACHE_HIT", "calc_id": self.almacen.nuevo_id("CALC"),
-                                                      "calc_original": previo["calc_id"], "cache_hit": True,
-                                                      "estado": previo["estado"], "datos": efectivos, "consumo_uc": 0.0})
+            hit = self.almacen.escribir("RC", "AG-13", {**base, "tipo_entrada": "CACHE_HIT", "calc_id": self.almacen.nuevo_id("CALC"),
+                                                        "calc_original": previo["calc_id"], "cache_hit": True,
+                                                        "estado": previo["estado"], "datos": efectivos, "consumo_uc": 0.0})
             r = dict(previo)
             r["cache_hit"] = True
-            r["calc_id_cache"] = e["calc_id"]
+            r["calc_id_cache"] = hit["calc_id"]
             return r
         # 3) Cálculo con doble pasada (determinismo) y segunda vía donde la ficha la tiene
         try:

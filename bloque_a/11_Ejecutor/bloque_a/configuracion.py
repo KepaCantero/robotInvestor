@@ -82,6 +82,8 @@ def raiz_paquete(cfg: dict) -> Path:
 def ruta(cfg: dict, clave: str) -> Path:
     """Ruta de una carpeta del paquete (prompts, plantillas, archivos_operativos)."""
     valor = (cfg.get("rutas") or {}).get(clave)
+    if valor is None:   # T-201: el mismo TypeError que daba `Path(None)`, con la clave que falta (o a null)
+        raise TypeError(f"rutas.{clave} no está en la configuración o es null")
     p = Path(valor)
     return p if p.is_absolute() else raiz_paquete(cfg) / p
 

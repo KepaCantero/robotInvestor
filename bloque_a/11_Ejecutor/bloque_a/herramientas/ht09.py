@@ -7,7 +7,7 @@ decisiones del Bloque A): la referencia es corpus congelado y no se toca. Coteja
 técnico). Desde la r03 (QA r02 de T-165) el enfoque es estructural: la madurez de un método solo la escribe el ejecutor, en una
 forma canónica junto a cada ficha, y la prosa del modelo no se interpreta (INC-T165-01 `[PROPUESTO]`).
 """
-from __future__ import annotations  # noqa: I001  (DIR_REFERENCIA va antes que la referencia)
+from __future__ import annotations
 
 import html as _html
 import json
@@ -15,11 +15,16 @@ import re
 import unicodedata
 from bisect import bisect_left
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from . import DIR_REFERENCIA  # noqa: F401  (añade la carpeta de referencia a sys.path)
-import ht09_validador_g3 as _ref
-from ht09_validador_g3 import *
+
+if TYPE_CHECKING:   # T-201: mypy lee la copia por su ruta de paquete; en ejecución se importa como siempre, desde sys.path
+    from .referencia import ht09_validador_g3 as _ref
+    from .referencia.ht09_validador_g3 import *
+else:
+    import ht09_validador_g3 as _ref
+    from ht09_validador_g3 import *
 
 modulo = _ref
 

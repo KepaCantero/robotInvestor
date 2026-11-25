@@ -1,0 +1,2 @@
+casos: 180 (con excepción en la base: 66); iguales: 175; diferencias declaradas: 5; otras diferencias: 0
+VEREDICTO: EQUIVALENTE salvo lo declarado

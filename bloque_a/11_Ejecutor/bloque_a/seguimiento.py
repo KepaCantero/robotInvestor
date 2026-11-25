@@ -101,7 +101,7 @@ class Seguimientos:
 
     def _cambio(self, ct24: dict, accion: str, as_of) -> dict:
         seg_id = ct24.get("seg_id")
-        enc = self.encargos().get(seg_id)
+        enc = self.encargos().get(seg_id) if seg_id is not None else None   # T-201: F11 no tiene la clave None
         if not enc:
             raise KeyError(f"Encargo desconocido {seg_id}")
         if enc["estado"] in ("CANCELADO", "FINALIZADO"):
@@ -325,9 +325,8 @@ class Seguimientos:
                 continue
             if p.get("estado") not in ("ABIERTO", "RESUELTO"):
                 continue
-            hitos = [{"hit_id": h, "fecha": (f4.get(h) or {}).get("fecha_resolucion"),
-                      "estado": {"ABIERTO": "PENDIENTE", "RESUELTO": "CUMPLIDO" if ((f4.get(h) or {}).get("resolucion") or {}).get("resultado_binario")
-                                 else "FALLADO"}.get((f4.get(h) or {}).get("estado"), "PENDIENTE")} for h in p.get("hit_ids", [])]
+            hitos = [{"hit_id": h, "fecha": (f4.get(h) or {}).get("fecha_resolucion"), "estado": _estado_hito(f4.get(h) or {})}
+                     for h in p.get("hit_ids", [])]
             estado = "EN_CURSO" if p.get("estado") == "ABIERTO" else "RESUELTO"
             if p.get("horizonte") == "H5":
                 estado = (b.evaluador.estado_h5(as_of)["pronosticos"].get(p["prg_id"]) or {}).get("estado", "EN_CURSO_CONFORME")
@@ -338,7 +337,7 @@ class Seguimientos:
         rev["sin_novedad_consecutivos"] = (int(enc.get("sin_novedad_consecutivos") or 0) + 1) if rev["sin_novedad"] else 0
         return rev
 
-    def _recomendacion(self, rev: dict, opp: dict, as_of) -> (str, str):
+    def _recomendacion(self, rev: dict, opp: dict, as_of) -> tuple[str, str]:
         hp_vence = False
         pend_cat = any(c["estado"] == "PENDIENTE" for c in rev["catalizadores"])
         if rev["invalidacion_activada"]:
@@ -422,9 +421,18 @@ class Seguimientos:
         return "\n".join(lin)
 
 
-def b_agente(clase: str) -> str:
+def b_agente(clase: str | None) -> str:
     from .contratos import AGENTE_CLASE
-    return AGENTE_CLASE.get(clase, "AG-03")
+    # T-201: una opción sin clase va, como una clase desconocida, al AG-03 (lo que ya hacía `AGENTE_CLASE.get(None, "AG-03")`)
+    return AGENTE_CLASE.get(clase, "AG-03") if clase is not None else "AG-03"
+
+
+def _estado_hito(hito: dict) -> str:
+    """Estado de un hito HIT- de F4 en el informe C6. T-201: sale de la comprensión de `_revision` sin cambiar nada; el
+    resultado binario se lee siempre, como antes, aunque el hito siga abierto."""
+    resuelto = "CUMPLIDO" if (hito.get("resolucion") or {}).get("resultado_binario") else "FALLADO"
+    estado = hito.get("estado")
+    return {"ABIERTO": "PENDIENTE", "RESUELTO": resuelto}.get(estado, "PENDIENTE") if estado is not None else "PENDIENTE"
 
 
 def _errores_esquema_seguimiento(b, informe: dict) -> list[str]:

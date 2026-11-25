@@ -1,0 +1,8 @@
+  OK    testigo: F3 liquidez: DISTINTO
+  CIEGO F3 dimensión T «duracion» (entrada de HT-03): EQUIVALENTE
+  CIEGO RC «duracion_sesiones» (resultado del Motor): EQUIVALENTE
+  CIEGO F4 «fecha_congelacion» (instante de dominio): EQUIVALENTE
+  CIEGO F3 fecha con hora: EQUIVALENTE
+  CIEGO F11 «_ts» del ciclo simulado: EQUIVALENTE
+  CIEGO 03_peticion.out «timestamp» del acuse: EQUIVALENTE
+puntos ciegos: ['F3 dimensión T «duracion» (entrada de HT-03)', 'RC «duracion_sesiones» (resultado del Motor)', 'F4 «fecha_congelacion» (instante de dominio)', 'F3 fecha con hora', 'F11 «_ts» del ciclo simulado', '03_peticion.out «timestamp» del acuse']
