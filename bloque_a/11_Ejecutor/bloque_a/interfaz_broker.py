@@ -470,7 +470,8 @@ class ConsultasBroker:
         por_run = {c["run_id"]: c["cns_id"] for c in iguales if c.get("run_id")}
         if len(por_run) >= n:
             with self.b.almacen._transaccion():
-                self.b.evaluador._nueva_leccion(as_of, {"agente": ["AG-01", "AG-17"], "tema": "CONSULTA_RECURRENTE"},
+                self.b.evaluador._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-01", "AG-17"],
+                                                       "metodo": "consulta_recurrente_ct23"},
                     "PRODUCTO", f"La misma duda aparece en {len(por_run)} análisis en {semanas} semanas.",
                     "Precisar el dato en la admisión del CT-01.", "recurrente", list(por_run.values()), len(por_run))
 

@@ -1672,9 +1672,10 @@ class Evaluador:
             for nombre, grupo in grupos.items():
                 total = sum(p["resolucion"]["resultado_binario"] for p in grupo)
                 etiqueta = "enviadas" if nombre == "ENVIADA_A_BLOQUE_B" else "descartadas"
-                resumen.append(f"{etiqueta}: {total}/{len(grupo)} pronósticos acertados")
+                resumen.append(f"{etiqueta}: {total}/{len(grupo)} pronósticos con acierto")
                 ids.extend(p["prg_id"] for p in grupo)
-            return self._nueva_leccion(as_of, {"agente": ["AG-17", "AG-02"], "tema": "DECISION_BROKER"},
+            return self._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-17", "AG-02"],
+                                               "metodo": "comparacion_decisiones_broker"},
                                        "PRODUCTO", ". ".join(resumen), "Mostrar ambos grupos en la lectura del informe.",
                                        "recurrente", ids, len(ids))
 

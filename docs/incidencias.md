@@ -929,7 +929,7 @@ La entrada exige fecha de publicación para las altas nuevas. Las fichas antigua
 
 ### INC-T188-01 [PROPUESTO] · Muestra para comparar decisiones del Broker
 
-La comparación es descriptiva. El umbral por grupo reutiliza evaluacion.min_calibrar [PROPUESTO]. Las lecciones de PRODUCTO solo van a agentes de producto.
+La comparación es descriptiva. El umbral por grupo reutiliza evaluacion.min_calibrar [PROPUESTO]. Las decisiones se distribuyen a AG-17 y AG-02, y las consultas recurrentes a AG-01 y AG-17. F6 identifica el método que generó cada lección. Detalle en `.docs/tickets/T-188`.
 
 ### INC-T189-01 [PROPUESTO] · Estimación del progreso al pedir más presupuesto
 
