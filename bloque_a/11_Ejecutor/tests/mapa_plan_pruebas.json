@@ -120,10 +120,11 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_gc0_negativo_arrastre_verificado",
-   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion",
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_rotacion_presupuestada_en_f5"
   ],
-  "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración.",
-  "no_comprueba": "Que la rotación exploratoria quede entre el 15 % y el 25 %: el ejecutor la mide en celdas fijas (`seleccion.rotacion_exploratoria_celdas`, [PROPUESTO] hasta T-57) y no lee `presupuesto_uc.rotacion_exploratoria` (0,20) (INC-T159-01). AS-06 es del Auditor (modelo real)."
+  "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración. Un ciclo registra en F5 el presupuesto de cribado de N1, la reserva de exploración y las celdas ofrecidas.",
+  "no_comprueba": "AS-06 corresponde al Auditor con el modelo real. La llamada conjunta no mide consumo efectivo por símbolo."
  },
  "PB-14": {
   "cobertura": "AUTOMATICA",
