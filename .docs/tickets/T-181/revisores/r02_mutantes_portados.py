@@ -17,7 +17,7 @@ MF, ORQ, CLI = "bloque_a/mantenimiento_fuentes.py", "bloque_a/orquestacion.py", 
 mutaciones = [
     (MF, 'if mes < fecha[:7] and ', 'if '),                                         # CT-21 antes de cerrar el mes
     (MF, 'if op.get("estado") != "VIGENTE":', 'if False:'),                         # revisa opciones no vigentes
-    (MF, 'set(op.get("evidencias_ps1", [])) - retiradas', 'set(op.get("evidencias_ps1", []))'),  # la raíz retirada cuenta
+    (MF, 'e.get("estado_verificacion") in (None, "VERIFICADA", "PENDIENTE")', 'e.get("estado_verificacion") in (None, "VERIFICADA", "PENDIENTE", "FUENTE_RETIRADA")'),  # la raíz retirada cuenta
     (MF, 'if contiene_credenciales(motivo) or any(c in motivo for c in ("<", ">")):', 'if False:'),  # R8 en el motivo
     (MF, ' or len(motivo.splitlines()) != 1:', ':'),                                # motivo multilínea
     (MF, ' and not ficha.campo("Copia archivada")', ''),                            # borra con copia archivada
@@ -31,7 +31,7 @@ mutaciones = [
     (MF, 'afectadas == op.get("revision_bajas", {}).get("evidencias_retiradas")', 'False'),  # F3 en cada pasada
     (MF, 'if not destino or (r.get("doi") and not isinstance(r.get("doi_codigo_http"), int)):', 'if not destino:'),
     (ORQ, 'if any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]', 'if False and any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]'),
-    (ORQ, 'f["_evidencias_ps1"].append(evd["evd_id"])', 'pass'),
+    (ORQ, 'f["_evidencias_ps1"] = list(respaldos)', 'f["_evidencias_ps1"] = []'),
     (CLI, 'if dia <= datos["fecha"]}', '}'),
 ]
 

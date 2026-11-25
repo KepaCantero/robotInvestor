@@ -204,7 +204,7 @@ def revisar_bajas(bloque, as_of, run_id):
             if not afectadas or afectadas == op.get("revision_bajas", {}).get("evidencias_retiradas"):
                 continue
             # Las fichas antiguas pueden carecer de estado de verificación: se conserva su traza de F3.
-            candidatas = [evds[eid] for eid in set(op.get("evidencias_ps1", [])) - retiradas if eid in evds]
+            candidatas = [evds[eid] for eid in op.get("evidencias_ps1", []) if eid in evds]
             raices = sint.raices_de_evidencias(e for e in candidatas if e.get("grado_independencia") == "RAIZ"
                 and e.get("direccion") == "FAVORABLE" and e.get("nivel_fuente") in ("A", "B")
                 and e.get("estado_verificacion") in (None, "VERIFICADA", "PENDIENTE"))

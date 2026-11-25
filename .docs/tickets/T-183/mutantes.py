@@ -18,7 +18,7 @@ pruebas = ["tests/test_t183_raices.py"]
 mutaciones = [
     ('M1 incluye retiradas/cuarentena', 'bloque_a/sintesis.py', 'and e.get("estado_verificacion") in ("VERIFICADA", "PENDIENTE")', 'and True'),
     ('M2 ignora origen documental', 'bloque_a/sintesis.py', 'origen = e.get("origen_documental") or e["ref_id"]', 'origen = e["ref_id"]'),
-    ('M3 aplica PS1 de la opción a cada CLM', 'bloque_a/orquestacion.py', 'cuenta, ps1 = len(propias), self._ps1(propias)', 'cuenta, ps1 = len(propias), self._ps1(sint.raices_de_evidencias(e for f in finales if cid in f["_evidencias"] for i in f["_evidencias_ps1"] if (e := por_id.get(i))))'),
+    ('M3 aplica PS1 de la opción a cada CLM', 'bloque_a/orquestacion.py', 'cuenta, ps1 = len(propias), self._ps1(propias)', 'cuenta, ps1 = len(propias), any(self._ps1(sint.raices_de_evidencias(e for otra in f["_evidencias"] for e in sint.evidencias_raiz(clms[otra], por_id).values())) for f in finales if cid in f["_evidencias"])'),
     ('M4 acepta contrarias', 'bloque_a/sintesis.py', ' and e.get("direccion") == "FAVORABLE"):', '):'),
     ('M5 cuenta referencias en la opción', 'bloque_a/orquestacion.py', 'f["_raices"] = sint.raices_de_evidencias(respaldos.values())', 'f["_raices"] = {e["ref_id"]: (e["nivel_fuente"], e["tipo_fuente"]) for e in respaldos.values()}'),
     ('M6 ignora primaria A', 'bloque_a/procedencia.py', 'or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())', 'or False'),
