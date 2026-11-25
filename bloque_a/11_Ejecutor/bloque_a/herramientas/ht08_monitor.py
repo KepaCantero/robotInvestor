@@ -9,6 +9,7 @@ import threading
 import time
 from collections import defaultdict
 
+from ..configuracion import parametro
 from ..contratos import ANALISTAS
 
 # Documento 0 V5.1, 4.5: sin estado (varias instancias) los Analistas de tipo de activo (AG-03 a AG-09 y AG-21 a
@@ -53,8 +54,25 @@ def clave_prioridad(orden: dict) -> tuple:
             orden["llegada"])
 
 
+def _positivo(nombre, valor):
+    if valor is None:
+        valor = parametro(None, f"paralelismo.{nombre}")
+    if type(valor) not in (int, float) or not math.isfinite(valor) or valor <= 0:
+        raise ValueError(f"{nombre} debe ser un número positivo y finito")
+    return valor
+
+
 class Monitor:
-    def __init__(self, umbral_cola: int = 3, instancias_max: int = 8, *, objetivo_ingesta_s=None, reloj=None) -> None:
+    def __init__(self, umbral_cola: int = 3, instancias_max: int = 8, *, objetivo_ingesta_s=None, reloj=None,
+                 factor_tiempo=None, rho_objetivo=None, rho_cierre=None, lecturas_cierre=None) -> None:
+        self.factor_tiempo = _positivo("factor_tiempo", factor_tiempo)
+        self.rho_objetivo = _positivo("rho_objetivo", rho_objetivo)
+        self.rho_cierre = _positivo("rho_cierre", rho_cierre)
+        self.lecturas_cierre = _positivo("lecturas_cierre", lecturas_cierre)
+        if not 0 < self.rho_cierre < self.rho_objetivo <= 1:
+            raise ValueError("Se exige 0 < rho_cierre < rho_objetivo <= 1")
+        if type(self.lecturas_cierre) is not int:
+            raise ValueError("lecturas_cierre debe ser un entero")
         self.umbral_cola = umbral_cola
         self.instancias_max = instancias_max
         self._lock = threading.Lock()
@@ -146,15 +164,15 @@ class Monitor:
                 ocupado = self.tiempo_total[ag] - prev_s
                 media = ocupado / n if n else None
                 antes = self.instancias[ag]
-                lenta = ag == "AG-12" and self.objetivo_ingesta_s is not None and media is not None and media > 2 * self.objetivo_ingesta_s
+                lenta = ag == "AG-12" and self.objetivo_ingesta_s is not None and media is not None and media > self.factor_tiempo * self.objetivo_ingesta_s
                 rho = ocupado / (ventana * antes) if ventana > 0 else None
-                metricas = {"cola": q, "W_medio_s": media, "rho": rho}
+                tasa = self._llegadas[ag] / ventana if ventana > 0 else None
+                metricas = {"cola": q, "W": media, "rho": rho, "lambda": tasa, "mu": 1 / media if media else None}
                 if lenta or q > self.umbral_cola:
                     self._lecturas_vacias[ag] = 0
-                    if ventana > 0 and media:
-                        tasa = self._llegadas[ag] / ventana
-                        c = math.ceil(tasa * media / 0.75)
-                        calculo = "c = ⌈λ/(μ·0,75)⌉"
+                    if tasa is not None and media:
+                        c = math.ceil(tasa * media / self.rho_objetivo)
+                        calculo = f"c = ⌈λ/(μ·{self.rho_objetivo})⌉"
                     else:
                         c = antes + 1
                         calculo = "primera apertura por cola sin tasa observada"
@@ -164,13 +182,18 @@ class Monitor:
                                        "instancias_despues": destino, "metricas_disparo": metricas, "calculo": calculo})
                         self.instancias[ag] = destino
                 elif antes > 1:
-                    libre = q == 0 and rho is not None and rho < 0.30
+                    libre = q == 0 and rho is not None and rho < self.rho_cierre
                     self._lecturas_vacias[ag] = self._lecturas_vacias[ag] + 1 if libre else 0
-                    if self._lecturas_vacias[ag] >= 2:
+                    if self._lecturas_vacias[ag] >= self.lecturas_cierre:
                         self.instancias[ag] -= 1
                         self._lecturas_vacias[ag] = 0
                         nuevas.append({"tipo_entrada": "ORD", "agente": ag, "accion": "CERRAR", "instancias_antes": antes,
-                                       "instancias_despues": antes - 1, "metricas_disparo": metricas})
+                                       "instancias_despues": antes - 1, "metricas_disparo": metricas,
+                                       "calculo": f"{self.lecturas_cierre} lecturas con cola 0 y ρ < {self.rho_cierre}"})
+                if ag == "AG-12" and antes > 1 and media is not None and self.objetivo_ingesta_s is not None:
+                    nuevas.append({"tipo_entrada": "CAR", "agente": ag, "saturado": False, "W": media,
+                                   "objetivo": self.objetivo_ingesta_s, "rho": rho, "instancias": self.instancias[ag],
+                                   "en_objetivo": media <= self.objetivo_ingesta_s})
                 self._previos[ag] = self.completados[ag], self.tiempo_total[ag]
                 self._llegadas[ag] = 0
             self._ultima_lectura = ahora

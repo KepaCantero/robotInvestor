@@ -174,10 +174,14 @@
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos",
    "11_Ejecutor/tests/test_t193_ingesta.py::test_abrir_por_tiempo_y_cerrar_con_histeresis",
    "11_Ejecutor/tests/test_t193_ingesta.py::test_cuarenta_ingestas_concurrentes_sin_duplicados",
-   "11_Ejecutor/tests/test_t193_ingesta.py::test_la_orden_por_ingesta_se_registra_en_el_mismo_ciclo"
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_la_orden_por_ingesta_se_registra_en_el_mismo_ciclo",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_coeficientes_y_recuperacion_medidos_por_ventana",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_cierre_consecutivo_solo_con_cola_vacia_y_baja_utilizacion",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_umbrales_configurados_y_limite_de_instancias",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_configuracion_objetivo_invalida"
   ],
-  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. Comprueba apertura por duración, cierre tras dos lecturas y deduplicación concurrente.",
-  "no_comprueba": "Falta medir la vuelta al objetivo bajo carga real y con un tiempo objetivo acordado."
+  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. Comprueba apertura por duración, cierre tras dos lecturas y deduplicación concurrente. Mide W por ventana, emite CAR con el objetivo tras la apertura y registra la recuperación en HA.",
+  "no_comprueba": "Faltan la cifra de recuperación con carga real y el objetivo de AG-12 acordado por el operador. Para los demás agentes sin estado solo se ha definido escalado por cola."
  },
  "PB-19": {
   "cobertura": "AUTOMATICA",

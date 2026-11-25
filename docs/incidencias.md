@@ -947,7 +947,7 @@ Para una tasa base contaminada, F6 conserva una entrada propuesta `CORRECCION_FU
 
 ### INC-T193-01 [PROPUESTO] · Objetivo temporal para la ingesta
 
-El operador debe fijar el objetivo de segundos y verificar la recuperación bajo carga real. Las órdenes del monitor no despliegan trabajadores físicos.
+Mientras el operador fija el objetivo de AG-12 en segundos, el valor nulo desactiva el disparo temporal. Los demás agentes sin estado escalan por cola. P-20 y el Anexo A dan el factor de tiempo; las utilizaciones y las lecturas de cierre proceden del Orquestador §6.10. Cuando falta una tasa observada, la apertura por cola añade una sola instancia hasta el máximo. Durante la ampliación, cada ventana con ingestas informa en HA del tiempo observado y de si ha vuelto al objetivo. La cifra efectiva con carga real queda pendiente del operador. Las órdenes del monitor describen la capacidad solicitada.
 
 ### INC-T-181-03 [PROPUESTO] · Calificación de referencias
 

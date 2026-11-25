@@ -176,7 +176,12 @@ class Bloque:
         self.almacen = Almacen(carpeta_estado, self.reloj)
         self.carpeta_entregables = Path(carpeta_entregables or (cfg.get("rutas") or {}).get("entregables", "./entregables"))
         self.contabilidad = Contabilidad(cfg)
-        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")), objetivo_ingesta_s=cfg["paralelismo"].get("objetivo_ingesta_s"))
+        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")),
+                               objetivo_ingesta_s=cfg["paralelismo"].get("objetivo_ingesta_s"),
+                               factor_tiempo=parametro(cfg, "paralelismo.factor_tiempo"),
+                               rho_objetivo=parametro(cfg, "paralelismo.rho_objetivo"),
+                               rho_cierre=parametro(cfg, "paralelismo.rho_cierre"),
+                               lecturas_cierre=parametro(cfg, "paralelismo.lecturas_cierre"))
         self.cache = CacheResultados(Path(carpeta_estado) / "cache_resultados.jsonl")
         self.cliente = cliente
         self.agentes = Agentes(cfg, cliente, self.almacen, self.contabilidad, self.monitor, self.cache)
