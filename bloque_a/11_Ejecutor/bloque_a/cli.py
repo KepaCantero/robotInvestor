@@ -139,9 +139,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(r, ensure_ascii=False, indent=1))
         return 0
     if a.cmd == "alta-referencias":
+        from .almacen import Reloj
         from .altas_referencias import incorporar
         from .referencias import ARCHIVOS_REF, localizar
-        incorporar(localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo]), a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")), cfg)
+        reloj = Reloj(cfg["zona_horaria"])
+        if a.as_of:
+            reloj.fijar(a.as_of)
+        catalogo = localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo])
+        estado = Path(a.estado or cfg["rutas"]["almacen"])
+        incorporar(catalogo, a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")), cfg,
+                   fecha_corte=reloj.fecha, registro_f9=estado / "F9_bajas.md")
         return 0
     if a.cmd == "verificar-enlaces":
         from .herramientas import ht02

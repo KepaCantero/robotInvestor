@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (r01, revisión independiente pendiente) |
+| Estado | EN QA (r02, pendiente de segunda revisión de Claude; r01 NO APTO) |
 | Implementación | Astra |
 | QA independiente | Claude |
 

@@ -923,7 +923,11 @@ En una misma afirmación, el ejecutor compara los conjuntos de tríos de palabra
 
 ### INC-T184-01 [PROPUESTO] · Prioridad de fichas antiguas sin fecha
 
-La entrada exige fecha de publicación para las altas nuevas. Las fichas antiguas sin fecha quedan detrás de las fechadas a igual calidad. Usar la configuración de la instancia para indicar el directorio operativo.
+Un lote JSON contiene fichas de un mismo catálogo con `id`, `tematica`, `titulo`, `url`, `fecha_publicacion`, `tipologia` y `puntos`. El identificador corresponde al prefijo del catálogo y queda reservado incluso tras su baja. La temática debe corresponder a una sola sección existente. El título ocupa una línea y el enlace debe ser HTTP(S) y apto para el catálogo Markdown. La publicación es una fecha ISO hasta la fecha de la instancia, inclusive.
+
+La tipología admite primaria, secundaria o terciaria. Los siete enteros de `puntos` respetan la rúbrica de su catálogo. Su suma determina Q y, si se incluye `q`, su valor entero debe coincidir. Las altas y las rebajas usan `referencias.niveles_q`, transcripción del §13.3, con A desde 80, B desde 65 y C desde 50. En D se puede declarar el dato necesario en `unica_fuente_de`. Las restantes D son candidatas a baja. Todo enlace nuevo empieza en `PENDIENTE_BARRIDO` (§13.4).
+
+A igualdad de Q prevalece la fecha de publicación más reciente. Para una ficha antigua que solo contiene el año se usa el primero de enero de ese año. Las fichas sin año ni fecha quedan al final del empate.
 
 **INC-T185-01 · 21-11-2026 · Reparto del presupuesto de exploración de N1 (Bloque A, T-185, PB-13).** [PROPUESTO] Se registra en F5 y en el CT-06 el reparto planificado de la bolsa de cribado de N1 (`presupuesto_uc.reparto_fases.cribado` × N1) entre vigentes y rotación (`presupuesto_uc.rotacion_exploratoria`). El proveedor factura el CT-06 entero y su coste por símbolo no se puede desglosar. Las celdas siguen en `seleccion.rotacion_exploratoria_celdas`. Detalle en `.docs/tickets/T-185`.
 

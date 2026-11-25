@@ -17,7 +17,7 @@ mutaciones = [
     ('datos.get("archived_snapshots") == {}', 'True'),
     ('copia["hash"] != ficha.campo("Hash de contenido")', 'False'),
     ('if ruta.read_text(encoding="utf-8") != original:', 'if False:'),
-    ('q = sum(puntos)', 'q = sum(puntos) - 1'),
+    ('return sum(puntos)', 'return sum(puntos) - 1'),
 ]
 
 

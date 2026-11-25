@@ -305,9 +305,21 @@
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_cada_referencia_esta_fisicamente_en_la_seccion_de_su_tematica",
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_a_igualdad_de_q_va_primero_la_mas_reciente",
    "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas",
-   "11_Ejecutor/tests/test_t184_altas.py::test_treinta_altas_y_lote_invalido"
+   "11_Ejecutor/tests/test_t184_altas.py::test_b01_treinta_altas_variadas_en_los_catalogos_reales_cumplen_pb26",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b02_lote_invalido_a_mitad_no_toca_el_catalogo_real",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b03_h01_no_reutiliza_un_identificador_dado_de_baja",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b04_h02_rechaza_fecha_de_publicacion_futura",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b05_h02_rechaza_enlaces_con_espacios_o_marcado",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b06_rechazos_conservan_el_archivo",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b07_lote_con_id_repetido_y_reintento_idempotente",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b08_otro_escritor_a_mitad",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b09_h03_nivel_d_unica_fuente_de_un_dato",
+   "11_Ejecutor/tests/test_t184_altas.py::test_b10_h04_la_ficha_de_alta_trae_tipologia_y_desglose_de_q",
+   "11_Ejecutor/tests/test_t184_altas.py::test_excepcion_de_d_y_rubrica",
+   "11_Ejecutor/tests/test_t184_altas.py::test_registro_de_la_instancia_y_configuracion",
+   "11_Ejecutor/tests/test_t184_altas.py::test_desempate_por_dia_y_anio_y_seccion_unica"
   ],
-  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados. La CLI incorpora treinta referencias en TA-06, TM-11 y TF-04 y mantiene el orden por calidad y fecha sin alterar el registro de bajas.",
+  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados. La CLI incorpora treinta referencias en TA-06, TM-11 y TF-04 y mantiene el orden por calidad y fecha sin alterar el registro de bajas. Las 30 altas probadas sobre copias de los catálogos entregados abarcan los cuatro niveles y sus fronteras. Se comprueban la excepción de D, el desglose de la rúbrica y el rechazo atómico.",
   "no_comprueba": ""
  },
  "PB-27": {
