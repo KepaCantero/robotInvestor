@@ -36,6 +36,7 @@ from .calendario import (  # noqa: F401
     validar_festivos_ps2,
 )
 from .carga import registrar_carga
+from .cola_peticiones import ColaPeticiones, PeticionInvalida, presupuesto_por_clase
 from .configuracion import (
     CLASES,
     HORIZONTES,
@@ -208,6 +209,8 @@ class Bloque:
         self.seguimientos = Seguimientos(self)
         # T-158: guías de mejora del Orquestador (CT-18); el receptor las revisa al empezar cada run (R23)
         self.guias = Guias(self)
+        # T-196 (PB-08, R5): cola de peticiones del Coordinador (CT-01 y análisis escalados de CT-03), en F5
+        self.cola = ColaPeticiones(self)
 
     # ====================================================================================
     # Utilidades
@@ -850,9 +853,7 @@ class Bloque:
                  tope_ciclo: float) -> dict[str, float]:
         """El presupuesto asignado a cada bolsa del ciclo (§7.2 y Anexo A; T-146 r02: sacado de `ciclo` para calcular antes de
         C5 el de su peor caso, `_comun_minimo_c5`)."""
-        asign = {c: float(parametro(self.cfg, f"presupuesto_uc.{nivel[c]}")) for c in clases}
-        if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
-            asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
+        asign = presupuesto_por_clase(self.cfg, tipo, clases, nivel)   # T-196: la misma regla que la cola de peticiones
         asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
         if presupuesto_override:
             asign.update(presupuesto_override)
@@ -2194,7 +2195,16 @@ class Bloque:
     # C3 · Consulta (CT-03)
     # ====================================================================================
     def consulta(self, texto: str, contexto: dict | None = None, as_of=None, urgencia: str = "NORMAL",
-                 ejecutar_escalado: bool = True) -> dict:
+                 ejecutar_escalado: bool = True, encolar_escalado: bool = False, instante=None) -> dict:
+        """C3. Con `encolar_escalado` (T-196, PB-08), la ruta ANALITICA no lanza el análisis: lo encola en la cola del
+        Coordinador (`self.cola`) y la provisional lleva el plazo de la cola; la final sale al atenderse. La ruta N0 es la
+        misma (carril rápido, sin cola). `instante` es el de la recepción (por defecto, el de `as_of`)."""
+        if encolar_escalado:   # T-196: antes de tocar nada, el instante y la prioridad del posible escalado
+            instante_cola = self.cola._instante(instante if instante is not None else pd.Timestamp(as_of or pd.Timestamp.today()))
+            self.cola._prioridad_de_consulta(urgencia)
+            if not ejecutar_escalado:
+                raise PeticionInvalida("encolar_escalado y ejecutar_escalado=False se excluyen")
+            as_of = instante_cola.tz_localize(None).normalize()
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
         respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
         msg = self.mensajeria.crear("CT-03", "BROKER", "AG-01", {"pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia})
@@ -2237,6 +2247,7 @@ class Bloque:
         d["referencias"] = refs
         escalado = None
         fallo = None
+        en_cola: dict | None = None
         if d["ruta"] == "ANALITICA":
             esc = d.get("escalado") or {}
             activas = list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))
@@ -2245,7 +2256,12 @@ class Bloque:
             nivel = esc.get("nivel") if esc.get("nivel") in ("N1", "N2", "N3") else ("N3" if d["clase_consulta"] == "PROFUNDIZACION" else "N2")
             escalado = {"nivel": nivel, "clases": clases, "plazo_estimado": "mismo día (ejecución síncrona del ejecutor)",
                         "respuesta_provisional": d["respuesta"], "run_id": None}
-            if ejecutar_escalado:
+            if encolar_escalado:   # T-196: a la cola; la PET- se escribe después de la QRY- y de la provisional
+                en_cola = self.cola.plazo_consulta(self.almacen.nuevo_id("PET"), nivel,
+                                                   {"clases": clases, "pregunta": esc.get("pregunta") or texto}, urgencia,
+                                                   instante_cola)
+                escalado["plazo_estimado"] = en_cola["plazo"]["plazo_estimado"]
+            elif ejecutar_escalado:
                 try:
                     res = self.ciclo(as_of, tipo="AD_HOC", alcance={"clases": clases, "pregunta": esc.get("pregunta") or texto},
                                      nivel_forzado=nivel, disparador={"origen": "CT-03", "msg_id": msg["msg_id"], "qry_id": qry_id})
@@ -2271,6 +2287,8 @@ class Bloque:
                    "ruta": d["ruta"], "respuesta": d["respuesta"], "referencias": refs, "referencias_descartadas": descartadas,
                    "confianza": d["confianza"], "escalado": escalado, "tiempo_respuesta_s": 0, "tema_normalizado": tema,
                    "consumo_uc": cons["uc"], "estado": "RESPONDIDA_N0" if d["ruta"] == "N0" else "RESPONDIDA_ANALITICA"}
+        if en_cola:
+            entrada["peticion_cola"] = en_cola["nueva"]["id"]
         if len(previas) + 1 >= int(pr_rep["veces"]):
             aviso = self.mensajeria.crear("CT-22", "AG-01", "AG-20", {"tipo": "PREGUNTA_REPETIDA", "tema": tema,
                                                                       "qry_ids": [q["id"] for q in previas] + [qry_id]}, query_id=qry_id)
@@ -2284,9 +2302,14 @@ class Bloque:
         # antes, el msg_id de la provisional queda en F5; si la final no sale ahora, la envía la consulta o el ciclo siguientes
         if escalado is not None:
             respuesta_final.registrar_provisional(self.almacen, qry_id, respuesta["msg_id"], fallo)
-        final = respuesta_final.enviar(self, qry_id, respuesta["msg_id"], as_of, fallo) if escalado is not None else None
+        if en_cola:   # T-196: la final sale al atender la petición (`ColaPeticiones.atender`)
+            self.cola.encolar_consulta(en_cola["nueva"], qry_id, msg["msg_id"], instante_cola)
+            final = None
+        else:
+            final = respuesta_final.enviar(self, qry_id, respuesta["msg_id"], as_of, fallo) if escalado is not None else None
         return {"query_id": qry_id, **{k: entrada[k] for k in ("clase_consulta", "ruta", "respuesta", "referencias", "confianza", "escalado")},
-                "repeticion": repeticion, "consumo": cons, "msg_id": respuesta["msg_id"], "respuesta_final": final}
+                "repeticion": repeticion, "consumo": cons, "msg_id": respuesta["msg_id"], "respuesta_final": final,
+                **({"peticion_cola": en_cola["nueva"]["id"], "cola": en_cola["plazo"]} if en_cola else {})}
 
     # ====================================================================================
     # CT-04 · Decisiones y configuración

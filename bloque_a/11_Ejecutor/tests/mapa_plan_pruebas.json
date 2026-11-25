@@ -73,10 +73,32 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia",
-   "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08"
+   "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08",
+   "11_Ejecutor/tests/test_t196.py::test_pb08_rafaga_del_plan_65_registradas_n0_sin_esperar_y_servicio_por_prioridad",
+   "11_Ejecutor/tests/test_t196.py::test_200_peticiones_en_cola_sin_rechazo_y_un_msg_id_repetido_no_duplica",
+   "11_Ejecutor/tests/test_t196.py::test_prioridad_efectiva_base_envejecimiento_y_su_maximo",
+   "11_Ejecutor/tests/test_t196.py::test_una_baja_que_espera_alcanza_a_una_normal_recien_llegada",
+   "11_Ejecutor/tests/test_t196.py::test_la_urgencia_por_fecha_objetivo_cercana_adelanta_la_peticion",
+   "11_Ejecutor/tests/test_t196.py::test_desempate_por_nivel_menor_y_despues_por_llegada",
+   "11_Ejecutor/tests/test_t196.py::test_presupuesto_proporcional_por_nivel_igual_que_el_ciclo",
+   "11_Ejecutor/tests/test_t196.py::test_servicio_real_de_un_ct01_y_de_una_consulta_escalada_con_su_final",
+   "11_Ejecutor/tests/test_t196.py::test_la_final_pendiente_de_una_consulta_atendida_otro_dia_cita_su_run",
+   "11_Ejecutor/tests/test_t196.py::test_un_ciclo_que_falla_deja_fallida_incidencia_y_el_resto_encolado",
+   "11_Ejecutor/tests/test_t196.py::test_dos_bloques_y_varios_hilos_nunca_toman_la_misma_peticion",
+   "11_Ejecutor/tests/test_t196.py::test_un_instante_anterior_a_una_recepcion_no_ordena_ni_sirve",
+   "11_Ejecutor/tests/test_t196.py::test_la_final_de_una_consulta_en_cola_no_sale_y_sin_pet_si",
+   "11_Ejecutor/tests/test_t196.py::test_por_defecto_la_consulta_y_la_peticion_siguen_atendiendose_en_el_momento",
+   "11_Ejecutor/tests/test_t196.py::test_atender_no_se_corta_si_llega_una_peticion_durante_el_servicio",
+   "11_Ejecutor/tests/test_t196.py::test_un_ct01_con_instante_anterior_a_otra_peticion_se_encola",
+   "11_Ejecutor/tests/test_t196.py::test_la_consulta_encolada_no_pierde_su_peticion_si_entra_otra_mientras_responde",
+   "11_Ejecutor/tests/test_t196.py::test_peticion_en_curso_de_un_proceso_muerto_deja_una_incidencia_y_se_reconcilia",
+   "11_Ejecutor/tests/test_t196.py::test_un_ct01_sin_clases_activas_se_rechaza_sin_escribir",
+   "11_Ejecutor/tests/test_t196.py::test_recepciones_concurrentes_dan_posiciones_distintas",
+   "11_Ejecutor/tests/test_t196.py::test_una_peticion_en_servicio_no_es_huerfana_hasta_quedar_atendida",
+   "11_Ejecutor/tests/test_t196.py::test_una_en_curso_de_un_proceso_vivo_no_es_huerfana"
   ],
-  "comprueba": "Idempotencia y acuse por mensaje; cola del monitor HT-08.",
-  "no_comprueba": "La ráfaga del plan: el ejecutor atiende cada CT-01 y cada CT-03 en el momento, sin cola de peticiones con prioridad y envejecimiento ni presupuesto por nivel (INC-T159-01). El p90 de N0 es de tiempo real."
+  "comprueba": "Idempotencia y acuse por mensaje; cola del monitor HT-08. Desde T-196, la ráfaga del plan (25 CT-01, 5 ALTA, 15 NORMAL y 5 BAJA, y 40 CT-03 en 10 minutos) con la cola del Coordinador: las 65 registradas en F5 (PET- y QRY-), ninguna rechazada (ni con 200 en cola, ni con instantes fuera de orden, ni si llega otra mientras se sirve o mientras una consulta responde), acuse con nivel, presupuesto, posición y plazo para cada CT-01, respuesta N0 o provisional con plazo para cada CT-03 y una sola final al atenderse; servicio por prioridad efectiva (base, envejecimiento por hora hasta su máximo y urgencia por fecha objetivo), con desempate por nivel y llegada; las N0 respondidas al recibirse sin lanzar ningún análisis y con el p90 de su tiempo de proceso (cliente simulado) por debajo del objetivo P-21; presupuesto del Anexo A por nivel, igual que el del ciclo; fallo del ciclo registrado (FALLIDA, incidencia, final FALLIDO) y tomas concurrentes sin duplicados; una petición EN_CURSO de un proceso muerto deja una incidencia (una vez) y se cierra con `reconciliar-peticion --fallida` y su final FALLIDO.",
+  "no_comprueba": "El p90 de N0 en tiempo real: con el cliente simulado la consulta N0 tarda décimas de segundo; con la API, el tiempo lo pone el modelo y se mide en el modo sombra. Tampoco se aplica la urgencia por la duración P80, que el ejecutor no mide (INC-T196-01)."
  },
  "PB-09": {
   "cobertura": "AUTOMATICA",

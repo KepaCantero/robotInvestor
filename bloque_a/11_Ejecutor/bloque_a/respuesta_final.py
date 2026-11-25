@@ -82,6 +82,17 @@ class RespuestaFinalInvalida(ValueError):
     pass
 
 
+def consulta_en_cola(almacen, qry: dict) -> bool:
+    """T-196 (PB-08): una consulta escalada cuya petición sigue en la cola del Coordinador (`cola_peticiones`, PET- ENCOLADA
+    o EN_CURSO): su análisis aún no ha terminado y la final no puede salir. Si la PET- no llegó a escribirse, no está en cola:
+    su análisis no se lanzó, y la final lo dice."""
+    pet_id = qry.get("peticion_cola")
+    if not pet_id:
+        return False
+    pet = almacen.estado("F5").get(pet_id) or {}
+    return pet.get("tipo_entrada") == "PETICION" and pet.get("estado") in ("ENCOLADA", "EN_CURSO")
+
+
 def para_la_consulta(almacen, error: BaseException) -> bool:
     """T-169 (H-01): True si el fallo del RUN- escalado tiene que parar la consulta (relanzarse) en vez de dar una final
     FALLIDO: un error de control, o cualquier error con algún fichero del almacén que ya no pasa su comprobación de integridad."""
@@ -240,6 +251,8 @@ def enviar(bloque, qry_id: str, provisional_msg_id: str | None, as_of, fallo: st
         registrado = qry.get("provisional_msg_id")
         if not isinstance(registrado, str) or not registrado.startswith("MSG-"):
             raise RespuestaFinalInvalida(f"{qry_id}: F5 no tiene registrada la respuesta provisional; no hay final que enlazar")
+        if consulta_en_cola(almacen, qry):   # T-196: la final sale al atender su petición, no antes
+            raise RespuestaFinalInvalida(f"{qry_id}: su análisis sigue en la cola ({qry['peticion_cola']}); la final sale al atenderlo")
         if provisional_msg_id is not None and provisional_msg_id != registrado:
             raise RespuestaFinalInvalida(f"{qry_id}: {provisional_msg_id} no es la provisional registrada en F5")
         fallo = fallo or qry.get("fallo_analisis")
@@ -255,12 +268,14 @@ def enviar(bloque, qry_id: str, provisional_msg_id: str | None, as_of, fallo: st
 
 def pendientes(almacen, as_of=None) -> list[tuple[str, str]]:
     """T-169 (H-02): (QRY-, su fecha) de cada consulta escalada con la provisional registrada en F5 y sin final enviada ni
-    apartada, en el orden de F5."""
+    apartada, en el orden de F5. T-196: sin las que tienen su análisis en la cola (`consulta_en_cola`)."""
     salida = []
     for qry_id, q in almacen.estado("F5", as_of).items():
         if (q.get("tipo_entrada") == "QRY" and q.get("ruta") == "ANALITICA" and isinstance(q.get("escalado"), dict)
-                and q.get("provisional_msg_id") and not q.get("respuesta_final") and not q.get("final_no_enviable")):
-            salida.append((qry_id, q["_historial"][0]["fecha"]))
+                and q.get("provisional_msg_id") and not q.get("respuesta_final") and not q.get("final_no_enviable")
+                and not consulta_en_cola(almacen, q)):
+            # T-196: la de una consulta encolada, con la fecha en que se atendió (la de su RUN-), no la de la consulta
+            salida.append((qry_id, q["_ultima_fecha"] if q.get("peticion_cola") else q["_historial"][0]["fecha"]))
     return salida
 
 
@@ -283,6 +298,9 @@ def enviar_pendientes(bloque, as_of=None) -> list[dict]:
     efecto con el almacén íntegro, que se apartan (H-01); el envío y el apartado van bajo la transacción del almacén y se vuelve a
     mirar dentro si ya tiene final o está apartada, así que se aparta una sola vez aunque la vean varios hilos o procesos (H-03)."""
     almacen = bloque.almacen
+    cola = getattr(bloque, "cola", None)
+    if cola is not None:   # T-196 r02 (H-03): avisa de las peticiones huérfanas, cuya final no puede salir sola
+        cola.huerfanas()
     enviadas = []
     for qry_id, fecha in pendientes(almacen, as_of):
         with almacen._transaccion():

@@ -524,6 +524,18 @@ paralelismo:
   hilos_analistas: 4
   umbral_cola: 3
 
+# T-196 (PB-08, R5): cola de peticiones del Coordinador (`bloque_a/cola_peticiones.py`). El presupuesto de cada petición sale
+# de `presupuesto_uc` (Anexo A, P-17). Prioridad efectiva = base + envejecimiento + urgencia (prompt del Coordinador V5.0,
+# §6.1); el Anexo A no da estos números: [PROPUESTO] (INC-T196-01), salvo el objetivo N0, que es el del Anexo A.
+cola_peticiones:
+  prioridad_base: {ALTA: 30, NORMAL: 20, BAJA: 10}   # [PROPUESTO] §6.1 del prompt del Coordinador
+  envejecimiento_por_hora: 1      # [PROPUESTO] §6.1: +1 por hora completa de espera…
+  envejecimiento_max: 15          # [PROPUESTO] §6.1: …hasta +15 (una BAJA alcanza a una NORMAL en 10 h)
+  urgencia_margen_h: 2            # [PROPUESTO] §6.1: si a la fecha objetivo le quedan menos de 2 h…
+  urgencia_puntos: 10             # [PROPUESTO] §6.1: …+10 (el +20 por la duración P80 no se aplica: no hay duraciones medidas)
+  prioridad_consulta: {INMEDIATA: ALTA, NORMAL: NORMAL}   # [PROPUESTO] prioridad del análisis escalado de una CT-03
+  objetivo_respuesta_n0_s: 120    # Anexo A, P-21: objetivo de respuesta N0 < 2 minutos (Servicio)
+
 backtest:
   frecuencia: semanal          # semanal | quincenal | mensual | diaria
   dia_semana: 4                # 0 = lunes … 4 = viernes (fecha as_of de cada ciclo)

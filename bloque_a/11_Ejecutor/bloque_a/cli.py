@@ -56,9 +56,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--ejecutar", action="store_true", help="dispara el C1 vencido; sin ella solo informa")
     p = sub.add_parser("peticion", help="Petición ad hoc CT-01")
     p.add_argument("--json", required=True)
+    p.add_argument("--encolar", action="store_true", help="T-196: a la cola del Coordinador (se atiende con atender-cola)")
+    p.add_argument("--instante", help="T-196: instante de recepción (AAAA-MM-DDThh:mm); por defecto, ahora")
     p = sub.add_parser("consulta", help="Consulta CT-03")
     p.add_argument("texto")
     p.add_argument("--sin-escalado", action="store_true")
+    p.add_argument("--encolar-escalado", action="store_true", help="T-196: el análisis escalado va a la cola del Coordinador")
+    p.add_argument("--instante", help="T-196: instante de recepción (AAAA-MM-DDThh:mm); por defecto, ahora")
+    p = sub.add_parser("atender-cola", help="T-196: atiende la cola de peticiones del Coordinador por prioridad")
+    p.add_argument("--maximo", type=int, help="Como mucho estas peticiones (por defecto, todas)")
+    p.add_argument("--instante", help="Instante del servicio (AAAA-MM-DDThh:mm); por defecto, el reloj (ahora, en cada toma)")
+    p = sub.add_parser("reconciliar-peticion", help="T-196: cerrar como FALLIDA una petición EN_CURSO huérfana (tras revisar F5)")
+    p.add_argument("pet_id")
+    p.add_argument("--fallida", action="store_true", required=True, help="La pasa a FALLIDA (y su consulta, a final FALLIDO)")
+    p.add_argument("--motivo", required=True)
     p = sub.add_parser("decision", help="Decisiones y configuración CT-04")
     p.add_argument("--json", required=True)
     sub.add_parser("evaluar", help="C5: resolución de pronósticos, métricas, certificados y lecciones")
@@ -152,12 +163,22 @@ def main(argv: list[str] | None = None) -> int:
     as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)
     if a.cmd == "ciclo":
         print(json.dumps(_resumen_run(bloque.ciclo(as_of)), ensure_ascii=False, indent=1))
+    elif a.cmd == "peticion" and a.encolar:
+        r = bloque.cola.recibir(json.loads(Path(a.json).read_text(encoding="utf-8")), _instante(a, bloque))
+        print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "peticion":
         r = bloque.peticion(json.loads(Path(a.json).read_text(encoding="utf-8")), as_of)
         print(json.dumps({**_resumen_run(r), "acuse": r["acuse"]}, ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "consulta":
-        r = bloque.consulta(a.texto, as_of=as_of, ejecutar_escalado=not a.sin_escalado)
+        r = bloque.consulta(a.texto, as_of=as_of, ejecutar_escalado=not a.sin_escalado, encolar_escalado=a.encolar_escalado,
+                            instante=_instante(a, bloque) if a.encolar_escalado else None)
         print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
+    elif a.cmd == "atender-cola":   # T-196 r02 (H-01): sin --instante, un reloj; (H-03) y las huérfanas
+        reloj = a.instante or (lambda: pd.Timestamp.now(tz=bloque.reloj.zona).floor("s"))
+        servidas = bloque.cola.atender(reloj, a.maximo)
+        print(json.dumps({"servidas": servidas, "huerfanas": bloque.cola.huerfanas()}, ensure_ascii=False, indent=1, default=str))
+    elif a.cmd == "reconciliar-peticion":
+        print(json.dumps(bloque.cola.reconciliar(a.pet_id, a.motivo), ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "decision":
         print(json.dumps(bloque.decision(json.loads(Path(a.json).read_text(encoding="utf-8")), as_of), ensure_ascii=False, indent=1))
     elif a.cmd == "evaluar":
@@ -183,6 +204,12 @@ def main(argv: list[str] | None = None) -> int:
         r = disparar(bloque, as_of, ejecutar=a.ejecutar)
         print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
     return 0
+
+
+def _instante(a, bloque):
+    """T-196: el instante de recepción o de servicio de la cola; sin `--instante`, ahora en la zona del bloque (frontera del
+    sistema: la hora real solo entra por aquí)."""
+    return a.instante or pd.Timestamp.now(tz=bloque.reloj.zona).floor("s")
 
 
 def _json(a) -> dict:
