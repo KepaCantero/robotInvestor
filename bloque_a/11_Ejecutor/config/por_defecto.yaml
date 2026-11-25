@@ -572,3 +572,7 @@ cadena_b:
   # Lo que el Bloque A no da y la petición lleva: los valores neutros del Anexo B.1 del Documento 0 del Bloque B
   # (nivel AUTO: lo propone el Bloque B; marco de invertibilidad por defecto, R4 y 2.7)
   peticion: {nivel: AUTO, prioridad: NORMAL, perfil_invertibilidad: MINORISTA_UE_DEFECTO}
+
+# INC-T183-02 [PROPUESTO], Jaccard de tríos de palabras en extractos de una misma afirmación.
+evidencia:
+  umbral_similitud_derivada: 0.80

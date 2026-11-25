@@ -312,10 +312,15 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion",
-   "11_Ejecutor/tests/test_t183_raices.py::test_un_original_y_veinte_derivadas"
+   "11_Ejecutor/tests/test_t183_raices.py::test_un_original_y_veinte_derivadas",
+   "11_Ejecutor/tests/test_t183_raices.py::test_ps1_por_opcion_y_por_afirmacion_y_origen",
+   "11_Ejecutor/tests/test_t183_raices.py::test_tres_saltos_sin_ficha_ciclo_y_original_en_otra_clm",
+   "11_Ejecutor/tests/test_t183_raices.py::test_similitud_sin_metadatos_y_fuente_distinta",
+   "11_Ejecutor/tests/test_t183_raices.py::test_g3_compara_paquete_historicos_y_fecha",
+   "11_Ejecutor/tests/test_t183_raices.py::test_baja_recalcula_afirmaciones_y_entrega_del_ciclo_siguiente"
   ],
-  "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración. El ejecutor distingue una raíz y veinte derivadas documentadas; G3 contrasta las cifras de las afirmaciones de cada oportunidad con F2.",
-  "no_comprueba": "La identificación semántica de reproducciones sin metadatos de procedencia y la revisión humana del Auditor."
+  "comprueba": "G3 contrasta la puerta PS1 de la opción con las raíces de las afirmaciones citadas en F2 a la fecha del paquete. Cubre la cadena de referencias, veinte reproducciones similares, la excepción de primaria A y la revisión de las afirmaciones tras una baja.",
+  "no_comprueba": "El recuento del Auditor con el modelo real (API real)."
  },
  "PB-30": {
   "cobertura": "AUTOMATICA",

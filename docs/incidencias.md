@@ -915,7 +915,11 @@ La pieza sospechosa se conserva en cuarentena y no cuenta en PS1. Una atribució
 
 ### INC-T183-01 [PROPUESTO] · Reproducciones sin atribución
 
-La identificación de reproducciones sin atribución documental requiere curación. Los registros históricos sin traza de PS1 siguen siendo legibles.
+«Fuente original» es un metadato opcional de la copia operativa. Las cadenas de atribución se resuelven contra las EVD de F2. Una derivada sin original identificado documenta su limitación. PS1 de una afirmación se calcula sobre sus propias raíces y PS1 de la opción sobre la unión de las afirmaciones citadas. Cuando falta la traza en registros históricos, G3 deja advertencia. Una CLM ausente o una puerta sin respaldo bloquean el paquete.
+
+### INC-T183-02 [PROPUESTO] · Similitud de las piezas documentales
+
+En una misma afirmación, el ejecutor compara los conjuntos de tríos de palabras normalizadas de extractos de referencias, con coeficiente de Jaccard mínimo 0,80 configurable. Conserva la raíz por fecha de disponibilidad y luego por identificador. Dos textos sin tríos suficientes solo se relacionan si tienen atribución documental. La revisión del Auditor con el modelo real requiere API.
 
 ### INC-T184-01 [PROPUESTO] · Prioridad de fichas antiguas sin fecha
 

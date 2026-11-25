@@ -603,27 +603,55 @@ def _control_unitarias(paquete, res):
     return res
 
 
-def raices_de_clm(clm, evds):
-    raices = {}
+def evidencias_raiz(clm, evds):
+    respaldo = {}
     for eid in clm.get("evidencias_ps1", []):
         e = evds.get(eid, {})
         if (eid in clm.get("evidencias", []) and e.get("grado_independencia") == "RAIZ"
                 and e.get("estado_verificacion") in ("VERIFICADA", "PENDIENTE") and e.get("direccion") == "FAVORABLE"):
-            origen = e.get("origen_documental") or e["ref_id"]
-            raices[origen] = (e["nivel_fuente"], e["tipo_fuente"])
+            respaldo[eid] = e
+    return respaldo
+
+
+def raices_de_evidencias(evidencias):
+    raices = {}
+    for e in evidencias:
+        origen = e.get("origen_documental") or e["ref_id"]
+        raices[origen] = (e["nivel_fuente"], e.get("tipo_fuente"))
     return raices
 
 
-def control_raices(paquete, clms, evds):
+def raices_de_clm(clm, evds):
+    return raices_de_evidencias(evidencias_raiz(clm, evds).values())
+
+
+def control_raices(paquete, clms, evds, ps1):
     incidencias = []
+    def anotar(severidad, oid, detalle):
+        incidencias.append({"severidad": severidad, "ruta": oid, "detalle": detalle})
+
     for clase in paquete["clases"].values():
         for op in clase.get("opciones", []):
+            oid = op["opp_id"]
+            union = {}
             for cid in op.get("evidencias", []):
-                clm = clms.get(cid, {})
-                if "evidencias_ps1" in clm and len(raices_de_clm(clm, evds)) != clm.get("raices_independientes"):
-                    incidencias.append({"severidad": "BLOQUEO", "ruta": op["opp_id"], "detalle": f"Recuento de raíces incoherente en {cid}"})
-    return {"id": "G3-DAT-09", "nombre": "Raíces independientes", "resultado": "BLOQUEO" if incidencias else "OK",
-            "incidencias": incidencias}
+                clm = clms.get(cid)
+                if clm is None:
+                    anotar("BLOQUEO", oid, f"CLM citada sin registro en F2: {cid}")
+                elif "evidencias_ps1" not in clm:
+                    anotar("ADVERTENCIA", oid, f"{cid} sin traza de PS1; recuento no verificable")
+                else:
+                    raices = raices_de_clm(clm, evds)
+                    union.update(raices)
+                    if len(raices) != clm.get("raices_independientes"):
+                        anotar("BLOQUEO", oid, f"Recuento de raíces incoherente en {cid}")
+            declarada = (op.get("puertas") or {}).get("PS1")
+            if type(declarada) is not bool:
+                anotar("BLOQUEO", oid, "Falta la puerta PS1 en la opción")
+            elif declarada != ps1(union):
+                anotar("BLOQUEO", oid, "PS1 declarada sin respaldo de raíces en F2")
+    estado = "BLOQUEO" if any(i["severidad"] == "BLOQUEO" for i in incidencias) else "ADVERTENCIA" if incidencias else "OK"
+    return {"id": "G3-DAT-09", "nombre": "Raíces independientes", "resultado": estado, "incidencias": incidencias}
 
 
 def _textos_transportados(contenido):
@@ -669,7 +697,7 @@ def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
     res = ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
-    res["comprobaciones"].append(control_raices(paquete, f2, bloque.almacen.estado("F2", paquete["fecha"], clave="evd_id")))
+    res["comprobaciones"].append(control_raices(paquete, f2, bloque.almacen.estado("F2", paquete["fecha"], clave="evd_id"), bloque._ps1))
     control_est06(res, "paquete", paquete)
     _control_unitarias(paquete, res)
     # La herramienta de referencia admite método ausente como comodín; R13 exige uno explícito para publicar cifras.

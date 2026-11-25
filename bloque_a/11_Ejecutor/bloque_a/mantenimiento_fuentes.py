@@ -8,6 +8,8 @@ from datetime import date
 from pathlib import Path
 
 from .configuracion import parametro
+from .procedencia import cumple_ps1
+from . import sintesis as sint
 from .contratos import contiene_credenciales
 from .herramientas import ht02
 from .referencias import nivel_de_q
@@ -183,7 +185,7 @@ def revisar_bajas(bloque, as_of, run_id):
         return
     almacen = bloque.almacen
     with almacen._transaccion():
-        evds = avisar_curador(almacen, bloque.mensajeria, as_of, run_id, bajas, motivos)
+        evds = avisar_curador(almacen, bloque.mensajeria, as_of, run_id, bajas, motivos, bloque.cfg)
         clms = almacen.estado("F2", as_of, clave="clm_id")
         opciones = almacen.estado("F3", as_of)
         meses = {}
@@ -197,13 +199,11 @@ def revisar_bajas(bloque, as_of, run_id):
             afectadas = sorted(ligadas & retiradas)
             if not afectadas or afectadas == op.get("revision_bajas", {}).get("evidencias_retiradas"):
                 continue
-            raices = {}
-            for eid in set(op.get("evidencias_ps1", [])) - retiradas:
-                e = evds.get(eid, {})
-                origen = e.get("ref_id", "")
-                if (origen and e.get("direccion") == "FAVORABLE"
-                        and e.get("grado_independencia") == "RAIZ" and e.get("nivel_fuente") in ("A", "B")):
-                    raices[origen] = (e["nivel_fuente"], e.get("tipo_fuente"))
+            # Las fichas antiguas pueden carecer de estado de verificación: se conserva su traza de F3.
+            candidatas = [evds[eid] for eid in set(op.get("evidencias_ps1", [])) - retiradas if eid in evds]
+            raices = sint.raices_de_evidencias(e for e in candidatas if e.get("grado_independencia") == "RAIZ"
+                and e.get("direccion") == "FAVORABLE" and e.get("nivel_fuente") in ("A", "B")
+                and e.get("estado_verificacion") in (None, "VERIFICADA", "PENDIENTE"))
             mantiene = op.get("ps1") is True and bloque._ps1(raices)
             almacen.escribir("F3", "AG-02", {"tipo_entrada": "ACTUALIZACION", "opp_id": oid,
                 "ps1": mantiene, "revision_bajas": {"run_id": run_id, "evidencias_retiradas": afectadas,
@@ -219,10 +219,11 @@ def revisar_bajas(bloque, as_of, run_id):
                                                  "bajas": referencias, "mensaje": msg})
 
 
-def avisar_curador(almacen, mensajeria, as_of, run_id, bajas, motivos=None):
+def avisar_curador(almacen, mensajeria, as_of, run_id, bajas, motivos=None, cfg=None):
     with almacen._transaccion():
         alertas = almacen.estado("F2", as_of, clave="baja_id")
         evds = almacen.estado("F2", as_of, clave="evd_id")
+        afectadas = set()
         for archivo, ref, dia in sorted(bajas):
             clave = f"{archivo}/{dia}/{ref}"
             if clave not in alertas:
@@ -235,6 +236,15 @@ def avisar_curador(almacen, mensajeria, as_of, run_id, bajas, motivos=None):
                 if e.get("ref_id") in (ref, ref.removeprefix("REF-")) and e.get("estado_verificacion") != "FUENTE_RETIRADA":
                     almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": eid, "estado_verificacion": "FUENTE_RETIRADA"})
                     e["estado_verificacion"] = "FUENTE_RETIRADA"
+                    afectadas.update(e.get("clm_ids", []))
+        if afectadas:
+            clms = almacen.estado("F2", as_of, clave="clm_id")
+            for cid in sorted(afectadas):
+                clm = clms.get(cid, {})
+                if "evidencias_ps1" in clm:
+                    raices = sint.raices_de_clm(clm, evds)
+                    almacen.escribir("F2", "AG-12", {"tipo_entrada": "CLM", "clm_id": cid,
+                                     "raices_independientes": len(raices), "ps1_cumple": cumple_ps1(raices, cfg)})
         return evds
 
 
@@ -262,4 +272,4 @@ def retirar_por_manipulacion(bloque, ref_id, as_of, run_id):
                 tmp.write((texto or cabecera) + linea)
             Path(tmp.name).replace(ruta)
         baja = ("F9", ref_id, previa or dia)
-        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {baja}, {baja: "Manipulación confirmada en F9"})
+        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {baja}, {baja: "Manipulación confirmada en F9"}, bloque.cfg)

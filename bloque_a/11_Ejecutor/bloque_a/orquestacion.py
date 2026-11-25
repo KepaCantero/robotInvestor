@@ -81,6 +81,7 @@ from .herramientas.ht08_monitor import Monitor
 from .interfaz_broker import ConsultasBroker, Credenciales
 from .llm import LLMClient, Uso
 from .motor import Motor
+from .procedencia import cumple_ps1, enlazar_documentos, umbral_similitud
 from .redaccion import Redaccion
 from .referencias import Referencias, conocible_desde
 from .seguimiento import Seguimientos
@@ -1446,6 +1447,7 @@ class Bloque:
             self._guardar_lote_evidencia(finales, clasif, clase, as_of, run_id)
 
     def _guardar_lote_evidencia(self, finales, clasif, clase, as_of, run_id):
+        umbral = umbral_similitud(self.cfg)
         i = 0
         clm_por_texto = {normalizar(c.get("afirmacion", "")): c for c in self.almacen.estado("F2", as_of, clave="clm_id").values()
                          if c.get("tipo_entrada") == "CLM"}
@@ -1481,7 +1483,7 @@ class Bloque:
                                                                        p, as_of, run_id)
                     clm = {"tipo_entrada": "CLM", "clm_id": self.almacen.nuevo_id("CLM"), "afirmacion": p["afirmacion"],
                            "tipo_afirmacion": tipo_afirmacion, "clase": clase,
-                           "evidencias": [], "raices_independientes": 0, "ps1_cumple": False,
+                           "evidencias": [], "evidencias_ps1": [], "raices_independientes": 0, "ps1_cumple": False,
                            "nivel_confianza": cl.get("nivel_confianza", "probable"),
                            "utilizada_por": [{"objeto": f["proxy"], "papel": "tesis"}], "historial": [{"fecha": str(as_of.date()), "cambio": "alta", "run_id": run_id}]}
                     if clm["tipo_afirmacion"] == "PRONOSTICO_FUENTE" and isinstance(p.get("pronostico_fuente"), dict):
@@ -1514,6 +1516,7 @@ class Bloque:
                     evd["incidencia_manipulacion"] = {"tipo": "INSTRUCCION_INCRUSTADA", "detalle": "pieza en cuarentena"}
                     self.almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": evd["evd_id"],
                                           "incidencia_manipulacion": evd["incidencia_manipulacion"], "estado_verificacion": "CUARENTENA"})
+                    evd["estado_verificacion"] = "CUARENTENA"
                     retirar_por_manipulacion(self, fuente, as_of, run_id)
                     continue
                 if evd.get("estado_verificacion") == "FUENTE_RETIRADA" or fuente in self.referencias.retiradas_f9(as_of):
@@ -1527,32 +1530,27 @@ class Bloque:
                     if evd["evd_id"] not in ids_ps1:
                         ids_ps1.append(evd["evd_id"])
                     f["_evidencias_ps1"].append(evd["evd_id"])
-                    f["_raices"][evd.get("origen_documental", raiz)] = (evd["nivel_fuente"], evd["tipo_fuente"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
-            raices = f["_raices"]
-            f["_ps1"] = self._ps1(raices)
-            for cid in f["_evidencias"]:
-                clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
-                propias = sint.raices_de_clm(clm, por_id)
-                clm["raices_independientes"] = len(propias)
-                clm["ps1_cumple"] = self._ps1(propias)
-                originales = {por_id[eid]["ref_id"]: eid for eid in clm["evidencias"] if eid in por_id
-                              and por_id[eid].get("grado_independencia") == "RAIZ"}
-                for eid in clm["evidencias"]:
-                    e = por_id.get(eid, {})
-                    soporte = originales.get(e.get("origen_documental"))
-                    if e.get("grado_independencia") == "DERIVADA" and soporte and e.get("raiz_evd_id") != soporte:
-                        self.almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": eid, "raiz_evd_id": soporte})
-                        e["raiz_evd_id"] = soporte
-        escritos = set()
-        for f in finales:
-            for cid in f["_evidencias"]:
-                if cid in escritos:
-                    continue
-                clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
+
+        clms = {c["clm_id"]: c for c in clm_por_texto.values()}
+        enlazar_documentos(clms, por_id, self.referencias, self.almacen, umbral)
+        emitidas = {cid for f in finales for cid in f["_evidencias"]}
+        for cid, clm in clms.items():
+            if "evidencias_ps1" not in clm:
+                continue
+            propias = sint.raices_de_clm(clm, por_id)
+            cuenta, ps1 = len(propias), self._ps1(propias)
+            if cid in emitidas or (clm.get("raices_independientes"), clm.get("ps1_cumple")) != (cuenta, ps1):
+                clm.update(raices_independientes=cuenta, ps1_cumple=ps1)
                 self.almacen.escribir("F2", "AG-12", {k: v for k, v in clm.items() if not k.startswith("_")})
-                escritos.add(cid)
+        for f in finales:
+            respaldos = {}
+            for cid in f["_evidencias"]:
+                respaldos.update(sint.evidencias_raiz(clms[cid], por_id))
+            f["_evidencias_ps1"] = list(respaldos)
+            f["_raices"] = sint.raices_de_evidencias(respaldos.values())
+            f["_ps1"] = self._ps1(f["_raices"])
 
     def _tipo_con_pronostico_fuente(self, tipo: str, p: dict, as_of, run_id: str) -> str:
         """T-125 r02 (QA r01, H-01, H-03 y H-04): una pieza que trae un bloque `pronostico_fuente` registrable (completo, de
@@ -1575,8 +1573,7 @@ class Bloque:
     def _ps1(self, raices: dict) -> bool:
         """PS1 (Anexo A, P-14): al menos `ps1.raices_min` raíces independientes de nivel A o B, o una fuente primaria de nivel
         A. `raices`: {raíz: (nivel, tipo de fuente)}."""
-        return sum(1 for n, _ in raices.values() if n in ("A", "B")) >= int(parametro(self.cfg, "ps1.raices_min")) \
-            or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())
+        return cumple_ps1(raices, self.cfg)
 
     def _clusteres(self, analisis: dict, as_of, run_id: str) -> dict:
         proxies = sorted({f["proxy"] for an in analisis.values() for f in an["finalistas"] if f.get("_gc3")}

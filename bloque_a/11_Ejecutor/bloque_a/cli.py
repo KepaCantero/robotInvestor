@@ -181,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
                     reloj = Reloj(cfg["zona_horaria"])
                     reloj.fijar(datos["fecha"])
                     almacen = Almacen(a.estado or cfg["rutas"]["almacen"], reloj)
-                    avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas, bajas)
+                    avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas, bajas, cfg)
         return codigo
     bloque = _bloque(a, cfg)
     as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)
