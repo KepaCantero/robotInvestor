@@ -23,6 +23,20 @@ from ht09_validador_g3 import *
 
 modulo = _ref
 
+
+class HerramientaNoDisponible(RuntimeError):
+    """La llamada a la herramienta de referencia no puede ejecutarse."""
+
+
+def validar_disponible(*args):
+    try:
+        return validar(*args)
+    except PermissionError:
+        raise
+    except (ImportError, OSError) as exc:
+        raise HerramientaNoDisponible("HT-09 no disponible") from exc
+
+
 # ------------------------------------------------------------------ G3-MET-13 (T-165)
 ID_MET13 = "G3-MET-13"
 NOMBRE_MET13 = "Madurez declarada de los métodos (R22)"

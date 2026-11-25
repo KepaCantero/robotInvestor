@@ -16,6 +16,7 @@ from typing import Any
 
 import pandas as pd
 
+from . import respuesta_final
 from .configuracion import (
     NATURALEZA_POR_DEFECTO,
     NATURALEZAS,
@@ -676,12 +677,17 @@ def control_est06(res, ruta, contenido):
 def control_con_respaldo(bloque, paquete, extras, visual, run_id):
     try:
         return ht09_validar(bloque, paquete, extras, visual)
-    except (RuntimeError, OSError, ValueError, KeyError, TypeError):
+    except ht09.HerramientaNoDisponible as exc:
+        causa = exc.__cause__ or exc
+        if respuesta_final.para_la_consulta(bloque.almacen, causa):
+            if isinstance(causa, respuesta_final.ERRORES_DE_CONTROL):
+                raise causa
+            raise ValueError("Fallo de integridad en el almacén durante HT-09") from exc
         fase = "F7" if visual is not None else "F6"
         detalle = "HT-09 no ha completado todas las comprobaciones. El Orquestador retiene la entrega."
         with bloque.almacen._transaccion():
             aviso = bloque.mensajeria.crear("CT-14", "AG-02", "AG-18",
-                {"paquete_sintesis": {"run_id": run_id}, "resultado_ht09": {"dictamen": "NO_DISPONIBLE", "fase": fase}},
+                {"paquete_sintesis": {**paquete, "resultado_ht09": {"dictamen": "NO_DISPONIBLE", "fase": fase}}},
                 run_id=run_id)
             bloque.almacen.incidencia("HERRAMIENTA", detalle, run_id, fase=fase, msg_id=aviso["msg_id"])
         return {"dictamen": "BLOQUEADO", "modo": "G3_MANUAL", "motivo": detalle, "resumen": {"bloqueos": 1},
@@ -695,7 +701,7 @@ def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None
     f2 = bloque.almacen.estado("F2", paquete["fecha"], clave="clm_id")
     trazas = {k: v.get("evidencias", []) for k, v in f2.items() if v.get("tipo_entrada") == "CLM"}
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
-    res = ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
+    res = ht09.validar_disponible(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
     res["comprobaciones"].append(control_raices(paquete, f2, bloque.almacen.estado("F2", paquete["fecha"], clave="evd_id"), bloque._ps1))
     control_est06(res, "paquete", paquete)

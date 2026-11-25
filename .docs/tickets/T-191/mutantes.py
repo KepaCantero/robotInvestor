@@ -1,4 +1,5 @@
 """Ejecutar con la venv del repositorio. Cada mutante vive en una copia temporal."""
+import ast
 import os
 import shutil
 import subprocess
@@ -8,12 +9,23 @@ from pathlib import Path
 
 raiz = Path(__file__).resolve().parents[3]
 ej = Path("bloque_a/11_Ejecutor")
-prueba = "tests/test_t191_degradado.py"
-mutaciones = [['bloque_a/sintesis.py', 'except (RuntimeError, OSError, ValueError, KeyError, TypeError):', 'except OSError:']]
+pruebas = ["tests/test_t191_degradado.py", "tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega"]
+# Reutiliza los operadores publicados por Claude sin ejecutar el programa durante la lectura.
+revisor = raiz / ".docs/tickets/T-191/revisores/r01_mutantes.py"
+tabla = next(n.value for n in ast.parse(revisor.read_text()).body
+             if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "MUT" for t in n.targets))
+_, revisados = ast.literal_eval(tabla)["T-191"]
+mutaciones = [(ruta, antes, despues) for nombre, ruta, antes, despues in revisados if nombre != "captura cualquier excepción"]
+mutaciones.extend([
+    ("bloque_a/sintesis.py", "except ht09.HerramientaNoDisponible as exc:", "except Exception as exc:"),
+    ("bloque_a/sintesis.py", "except ht09.HerramientaNoDisponible as exc:", "except ImportError as exc:"),
+    ("bloque_a/sintesis.py", 'return {"dictamen": "BLOQUEADO", "modo": "G3_MANUAL"', 'return {"dictamen": "APTO", "modo": "G3_MANUAL"'),
+])
+
 
 
 def correr(carpeta):
-    return subprocess.run([sys.executable, "-m", "pytest", "-q", prueba], cwd=carpeta / ej, text=True,
+    return subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", *pruebas], cwd=carpeta / ej, text=True,
                           capture_output=True, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
 
 

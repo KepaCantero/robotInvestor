@@ -785,6 +785,8 @@ class Bloque:
         resultado["entregables"] = entreg
         resultado["g3_entregables"] = g3b
         if g3b["dictamen"] == "BLOQUEADO":
+            if g3b.get("modo") == "G3_MANUAL":
+                resultado["g3"] = g3b
             resultado["estado"] = "PARCIAL"
             resultado["entrega"] = "BLOQUEADA"
             self._registrar_run(resultado, analisis, seleccion, presupuesto, gc0, disparador, alcance, hz_interes, prioridad, [], [])

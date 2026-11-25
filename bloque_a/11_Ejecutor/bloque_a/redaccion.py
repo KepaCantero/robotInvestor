@@ -417,6 +417,8 @@ class Redaccion:
         Path(rutas["informe_visual"]).write_text(visual, encoding="utf-8")
         leg = ht07.analizar(Path(rutas["informe_visual"]).read_text(encoding="utf-8"), es_html=True)
         res = sint.control_con_respaldo(bloque, paquete, extras, rutas["informe_visual"], run_id)
+        if res.get("modo") == "G3_MANUAL":
+            paquete.setdefault("limitaciones", []).append(res["motivo"])
         # T-175 r02 (QA r01, H-01): el texto del modelo de una alternativa que G3-MET-13 rechazaría no se presenta en el técnico
         # (se sustituye y queda íntegro en F3); en su lugar, una ADVERTENCIA en HA. Lo que escribe el ejecutor sigue comprobándose
         extras["alternativas_descartadas"] = sint.alternativas_descartadas(paquete, extras, bloque)
@@ -475,7 +477,7 @@ class Redaccion:
                                                 "errores_esquema": errores, "incoherencias": coh,
                                                 "comprobaciones": [{"id": c["id"], "resultado": c["resultado"], "detalle": detalles_g3v(c)}
                                                                    for c in res["comprobaciones"]]})
-        return rutas, {"dictamen": dictamen, "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
+        return rutas, {"dictamen": dictamen, **({"modo": res["modo"]} if res.get("modo") else {}), "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
 
 

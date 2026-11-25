@@ -305,17 +305,26 @@ def test_pb47_un_metodo_documentado_no_se_usa_y_la_entrega_lo_declara(tmp_path, 
 
 # ---------------------------------------------------------------- PB-52 · herramienta caída (lo que sí cumple)
 def test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega(tmp_path, universo, monkeypatch):
-    """T-191: un bloqueo manual se registra en el historial del ciclo."""
+    """La caída en F6 deja un bloqueo manual en HA, sin dictamen favorable, entrega ni pronóstico."""
 
     def caido(*args, **kwargs):
-        raise RuntimeError("HT-09 no disponible")
+        raise sint.ht09.HerramientaNoDisponible("HT-09 no disponible")
+    control = sint.control_con_respaldo
+    def observar(*args, **kwargs):
+        decision = control(*args, **kwargs)
+        assert decision["dictamen"] == "BLOQUEADO"
+        return decision
+
     monkeypatch.setattr(sint, "ht09_validar", caido)
+    monkeypatch.setattr(sint, "control_con_respaldo", observar)
     b = nuevo_bloque(tmp_path, universo)
     r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     assert r["entrega"] == "BLOQUEADA" and r["g3"]["modo"] == "G3_MANUAL"
     assert not [p for p in (tmp_path / "ent").rglob("*") if p.is_file()]
     assert not [e for e in b.almacen.leer("F4") if e.get("tipo_entrada") == "ALTA"]
-    assert any(e.get("tipo_control") == "G3_MANUAL" for e in b.almacen.leer("HA"))
+    g3v = [e for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "G3V"]
+    assert not any(str(e.get("dictamen_efectivo")).startswith("APTO") for e in g3v)
+    assert any(e.get("tipo_control") == "G3_MANUAL" and e["dictamen_efectivo"] == "BLOQUEADO" for e in g3v)
 
 
 # ---------------------------------------------------------------- PB-67 · el seguimiento propone el envío al Bloque B

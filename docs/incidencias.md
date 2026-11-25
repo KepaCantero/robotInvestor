@@ -661,7 +661,7 @@ Detalle en [.docs/tickets/T-142](../.docs/tickets/T-142/analisis-tecnico.md).
 Detalle en [.docs/tickets/T-157](../.docs/tickets/T-157/analisis-tecnico.md) y en `docs/auditoria_ids_bloque_a.md`.
 
 **INC-T159-01 · 2026-11-16 · Funciones que el ejecutor no tiene en trece casos «Superada en parte» del Plan de pruebas (Bloque A, Fase 4, T-159).** Al clasificar los 37 casos «en parte» (`.docs/tickets/T-159/analisis-tecnico.md`), estos trece (diez en la r01 y tres más en la r02) no se cierran con una prueba: les falta una función del ejecutor. No se cambia el código en T-159 (solo pruebas) ni se decide nada en silencio; la fila queda «Superada en parte» con el hueco dicho en el mapa. **Para un ticket nuevo** (o uno por grupo), por lo que pesan en el control:
-- **PB-52, descubierto por una prueba.** Con HT-09 caído, `Bloque.ciclo` termina con la excepción de HT-09: ni CT-14 al Orquestador, ni G3 manual con etiqueta, ni el RUN- en F5, ni una incidencia HERRAMIENTA. Se cumple lo esencial (nada se entrega, nada se congela y no hay APTO por defecto, probado en `test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega`), pero el bloqueo no queda justificado ni registrado. `Bloque._validar_g3` no protege la llamada a `sintesis.ht09_validar`.
+- **PB-52.** T-191 r02 implementa el bloqueo registrado y la CT-14 en F6 y F7. El límite pendiente es la ejecución manual de los controles B (INC-T191-01).
 - **PB-20.** La fuente con una instrucción incrustada no se degrada ni se borra en F9 con su línea en el Registro de bajas, y la comprobación G3-EST-06 no existe en HT-09.
 - **PB-24.** La baja de una referencia no se propaga: ni EVD en FUENTE_RETIRADA, ni revisión registrada en F3, ni el paquete CT-21 del mes; el ejecutor solo invoca HT-02.
 - **PB-29.** `grado_independencia` es siempre RAIZ y las raíces de PS1 se cuentan por fuente: veinte medios que reproducen un informe serían veinte raíces. El ejecutor no lee del Curador qué piezas son derivadas.
@@ -937,7 +937,7 @@ La comparación es descriptiva. El umbral por grupo reutiliza evaluacion.min_cal
 
 ### INC-T191-01 [PROPUESTO] · Bloqueo ante la caída del verificador
 
-El modo manual no acredita que se hayan ejecutado los controles de la herramienta caída. El resultado seguro es un bloqueo justificado.
+El Orquestador retiene la entrega cuando HT-09 no puede ejecutarse. El historial y F5 conservan el motivo y la fase. La CT-14 transporta el paquete del ciclo con el detalle de indisponibilidad en `paquete_sintesis.resultado_ht09`. La comprobación manual de los controles B queda pendiente. Los fallos de control, de integridad y de programación interrumpen el ciclo.
 
 ### INC-T192-01 [PROPUESTO] · Evaluación del ajuste antes de aplicarlo
 
