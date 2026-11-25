@@ -121,11 +121,13 @@ class Referencias:
         return {"REF-" + rid for rid, dia in bajas_registradas(ruta.read_text(encoding="utf-8").splitlines())
                 if dia <= str(as_of)[:10]}
 
-    def por_id(self, ref_id: str) -> Optional[Dict]:
+    def por_id(self, ref_id: str, as_of="9999-12-31") -> Optional[Dict]:
         rid = ref_id.replace("REF-", "")
         for lst in self.fichas.values():
             for r in lst:
                 if r["ref_id"] == rid:
+                    if r["archivo"] == "F9" and "REF-" + rid in self.retiradas_f9(as_of):
+                        return {**r, "estado_enlace": "RETIRADA"}
                     return r
         return None
 

@@ -351,13 +351,17 @@ def _numero_finito(x) -> bool:
     return not isinstance(x, bool) and isinstance(x, (int, float)) and _finito(x)
 
 
-def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
+def fuente_de_opinion_registrada(ref_id, referencias, as_of=None) -> bool:
     """T-125 r02 (QA r01, H-04): el `ref_id` de un pronóstico de fuente es una fuente registrada en F9 (Registro de Fuentes,
     `REF-RF-…`). Sin registro de referencias no se acepta ninguna (falla cerrado)."""
     if referencias is None or not isinstance(ref_id, str) or not ref_id.startswith("REF-"):
         return False
-    ficha = referencias.por_id(ref_id)
-    return bool(ficha) and ficha.get("archivo") == "F9"
+    from .referencias import Referencias
+    if as_of is not None and isinstance(referencias, Referencias):
+        ficha = referencias.por_id(ref_id, as_of)
+    else:
+        ficha = referencias.por_id(ref_id)
+    return bool(ficha) and ficha.get("archivo") == "F9" and ficha.get("estado_enlace") != "RETIRADA"
 
 
 def variables_nivel(cfg: dict | None) -> list[str]:
@@ -405,7 +409,7 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
         return "umbral_o_rango no válido para la dirección"
     if prob is not None and not (_prob_valida(prob) and 0.0 < float(prob) < 1.0):
         return "probabilidad fuera de (0, 1)"
-    if not fuente_de_opinion_registrada(ref_id, referencias):
+    if not fuente_de_opinion_registrada(ref_id, referencias, registro):
         return f"«{ref_id}» no es una fuente registrada en F9"
     if fuente is not None and ref_id != fuente:
         return f"el ref_id «{ref_id}» no es la fuente de la pieza («{fuente}»)"
@@ -2019,7 +2023,7 @@ class Evaluador:
                 continue   # T-125 r03 (QA r02, H-09 y H-12): variable que el cierre no resuelve, o dirección que no es texto
             if not emision <= pd.Timestamp(registro) < objetivo:
                 continue   # H-03: registrado cuando el resultado ya era conocible (o antes de emitirse): no cuenta
-            if not fuente_de_opinion_registrada(ref_id, self.referencias):
+            if not fuente_de_opinion_registrada(ref_id, self.referencias, corte):
                 continue   # H-04: no es una fuente de F9
             if direccion in ("por_encima", "por_debajo"):
                 if not _numero_finito(umbral):

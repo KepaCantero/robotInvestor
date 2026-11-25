@@ -97,6 +97,8 @@ class Redaccion:
         t = self.plantilla_html.read_text(encoding="utf-8")
         i = t.find('<div class="ejemplo"')
         cab = t[:i] if i > 0 else t[:t.find("<body>") + 6]
+        # Las notas internas de la plantilla no forman parte del informe. El texto de los agentes se incorpora después.
+        cab = re.sub(r"<!--.*?-->", "", cab, flags=re.DOTALL)
         return cab.replace('lang="es-ES"', f'lang="{self.cfg.get("idioma", "es-ES")}"')
 
     def visual(self, bloque, paquete: dict, red: dict, as_of) -> str:

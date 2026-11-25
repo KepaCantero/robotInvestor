@@ -9,7 +9,7 @@ from pathlib import Path
 raiz = Path(__file__).resolve().parents[3]
 ej = Path("bloque_a/11_Ejecutor")
 prueba = "tests/test_t182_procedencia.py"
-mutaciones = [['bloque_a/sintesis.py', 'if MARCA_RETIRADA not in texto and not RE_INYECCION.search(texto):', 'if True:'], ['bloque_a/mantenimiento_fuentes.py', 'if not RE_INYECCION.search(ref["titulo"]):', 'if True:']]
+mutaciones = [['bloque_a/sintesis.py', 'if not any(MARCA_RETIRADA in texto or RE_EST06.search(texto) for texto in _textos_transportados(contenido)):', 'if True:'], ['bloque_a/mantenimiento_fuentes.py', 'if not RE_INYECCION.search(ref["titulo"]):', 'if True:']]
 
 
 def correr(carpeta):

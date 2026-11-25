@@ -198,15 +198,19 @@
   "no_comprueba": ""
  },
  "PB-20": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_instruccion_incrustada_ignorada_y_registrada",
    "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9",
    "11_Ejecutor/tests/test_t182_procedencia.py::test_del_buscador_al_curador",
-   "11_Ejecutor/tests/test_t182_procedencia.py::test_control_de_salida"
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_control_de_salida",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_prosa_financiera_y_marcas_en_textos_transportados",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_control_sobre_borrador_y_paquete",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_f7_y_evidencia_ya_retirada",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_atribucion_sin_confirmar_cuarentena_la_pieza"
   ],
-  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables. Una recuperación CT-07 de una fuente contaminada deja EVD, incidencia y baja de F9. G3-EST-06 bloquea contenido contaminado en la salida.",
-  "no_comprueba": ""
+  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables. Una recuperación CT-07 de una fuente contaminada deja EVD, incidencia y baja de F9. G3-EST-06 bloquea contenido contaminado en la salida. Verifica el paquete y los borradores reales, prosa financiera, exclusión temporal de F9 y CT-21 tras el cierre.",
+  "no_comprueba": "Cuando solo el extracto atribuido por el modelo es sospechoso, el ejecutor aísla la pieza. Para retirar la fuente hay que comprobar el contenido de la página en la API real. INC-T182-01."
  },
  "PB-21": {
   "cobertura": "AUTOMATICA",

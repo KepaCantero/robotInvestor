@@ -5,3 +5,5 @@ Claude revisa los criterios de aceptación del README y reproduce las pruebas co
 `.venv/bin/python -m pytest -q bloque_a/11_Ejecutor/tests/test_t182_procedencia.py`
 
 La detección usa las reglas R9 del proyecto. La atribución libre de una respuesta del modelo permite poner la pieza en cuarentena; una baja en el catálogo exige comprobar la fuente local.
+
+Revisar INC-T182-01 y la columna «No comprueba» de PB-20. El ensayo usa marcas de prueba y textos financieros benignos. El archivo de bajas está en la instancia de ejecución.

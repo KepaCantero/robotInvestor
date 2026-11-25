@@ -102,20 +102,24 @@ RE_SECRETO = re.compile(
     r"|(?-i:(\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
-PATRONES_INYECCION = [
-    r"ignora(?:d)?\s+(?:todas\s+)?(?:las\s+)?instrucciones(?:\s+anteriores)?",
+# EST-06 inspecciona cadenas transportadas y los entregables redactados.
+# La dimensión (A/E/T/R/K) exige mayúscula: «sube a 120» es prosa financiera.
+PATRONES_EST06 = (
+    r"ignora(?:d)?\s+(?:todas\s+)?(?:(?:tus|las)\s+)?instrucciones(?:\s+anteriores)?",
     r"olvida\s+(?:tus|las)\s+(?:instrucciones|reglas)",
     r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions",
     r"disregard\s+(?:the\s+)?(?:previous|system)\s+(?:instructions|prompt)",
-    r"(?:nuevo|new)\s+system\s+prompt",
-    r"act[uú]a\s+como\s+si",
-    r"(?:asigna|pon|sube)\s+(?:una\s+)?(?:puntuaci[oó]n|nota|[AETRK]{1,2})\s+(?:de\s+|a\s+)?\d{2,3}",
-    r"(?:cambia|modifica)\s+(?:el|los)\s+(?:umbral|umbrales|par[aá]metros?)",
+    r"(?:asigna|pon|sube)\s+(?:una\s+)?(?:(?:la\s+)?puntuaci[oó]n|nota|(?-i:[AETRK]{1,2}))\s*(?:=|de|a)\s*\d{2,3}",
+    r"(?:nuevo|new)\s+system\s+prompt", r"act[uú]a\s+como\b",
+    r"a\s+partir\s+de\s+ahora", r"responde\s+solo", r"llama\s+a\s+la\s+herramienta",
+    r"(?m:^\s*(?:system|assistant)\s*:)", r"[\u200b-\u200f\u2060\ufeff]", r"<!--",
+    r"[?&](?:tool|function|action)=", r"<\s*/?\s*system\s*>",
     r"(?:env[ií]a|reenv[ií]a|manda)\s+(?:esto|el\s+informe|los\s+datos)\s+a",
-    r"you\s+are\s+now",
-    r"<\s*/?\s*system\s*>",
-]
-RE_INYECCION = re.compile("|".join(f"(?:{p})" for p in PATRONES_INYECCION), re.IGNORECASE)
+)
+RE_EST06 = re.compile("|".join(PATRONES_EST06), re.IGNORECASE)
+PATRONES_INYECCION = (*PATRONES_EST06, r"(?:cambia|modifica)\s+(?:el|los)\s+(?:umbral|umbrales|par[aá]metros?)",
+                      r"you\s+are\s+now")
+RE_INYECCION = re.compile("|".join(PATRONES_INYECCION), re.IGNORECASE)
 MARCA_RETIRADA = "[INSTRUCCION_INCRUSTADA_RETIRADA]"
 
 

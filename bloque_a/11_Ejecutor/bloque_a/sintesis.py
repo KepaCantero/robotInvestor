@@ -25,7 +25,7 @@ from .configuracion import (
     parametro,
     sesiones_horizonte,
 )
-from .contratos import MARCA_RETIRADA, RE_INYECCION, REGIONES
+from .contratos import MARCA_RETIRADA, RE_EST06, REGIONES
 from .evaluador import estado_hito
 from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion
@@ -626,10 +626,19 @@ def control_raices(paquete, clms, evds):
             "incidencias": incidencias}
 
 
+def _textos_transportados(contenido):
+    if isinstance(contenido, str):
+        yield contenido
+    elif isinstance(contenido, dict):
+        for valor in contenido.values():
+            yield from _textos_transportados(valor)
+    elif isinstance(contenido, (list, tuple)):
+        for valor in contenido:
+            yield from _textos_transportados(valor)
+
+
 def control_est06(res, ruta, contenido):
-    import json
-    texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
-    if MARCA_RETIRADA not in texto and not RE_INYECCION.search(texto):
+    if not any(MARCA_RETIRADA in texto or RE_EST06.search(texto) for texto in _textos_transportados(contenido)):
         return False
     res["comprobaciones"].append({"id": "G3-EST-06", "nombre": "Contenido externo en la entrega", "resultado": "BLOQUEO",
                                   "incidencias": [{"severidad": "BLOQUEO", "ruta": ruta, "detalle": "Texto en cuarentena"}]})

@@ -911,7 +911,7 @@ Documento 0 §13.3–13.6 atribuye al custodio la revisión de contenido y la re
 
 ### INC-T182-01 [PROPUESTO] · Confirmación de la fuente antes de una baja
 
-La detección usa las reglas R9 del proyecto. La atribución libre de una respuesta del modelo permite poner la pieza en cuarentena; una baja en el catálogo exige comprobar la fuente local.
+La pieza sospechosa se conserva en cuarentena y no cuenta en PS1. Una atribución del modelo con un título de catálogo limpio requiere verificación de la página por el custodio antes de retirar la fuente (alternativa de H-03). Si el título confirma la manipulación, la baja se registra por fecha en `<estado>/F9_bajas.md`. El catálogo congelado conserva la ficha. La búsqueda y el Evaluador aplican la baja desde su fecha. Así cada backtest tiene su propio registro. El custodio puede consolidar la baja en la copia operativa de F9 mediante HT-02 y su registro de bajas.
 
 ### INC-T183-01 [PROPUESTO] · Reproducciones sin atribución
 
