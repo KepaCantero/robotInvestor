@@ -5,3 +5,7 @@ Claude revisa los criterios de aceptación del README y reproduce las pruebas co
 `.venv/bin/python -m pytest -q bloque_a/11_Ejecutor/tests/test_t185_rotacion.py`
 
 El proveedor factura la llamada CT-06 completa. El presupuesto de exploración se conoce por separado; su coste efectivo dentro de esa llamada no se puede desglosar.
+
+## Integración de H-03
+
+En el parche único de T-185 hacia develop, incluir el reparto de CT-06 junto con `tests/goldens/formas_flujos_mock.json` y su entrada en REGISTRO.md. La rama de QA mantiene la historia de r01 para conservar los identificadores revisados.

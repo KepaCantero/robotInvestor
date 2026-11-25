@@ -603,6 +603,12 @@ class Bloque:
     def ciclo(self, as_of=None, tipo: str = "PERIODICO", alcance: dict | None = None, nivel_forzado: str | None = None,
               horizontes: list[str] | None = None, disparador: dict | None = None, prioridad: str = "NORMAL",
               presupuesto_override: dict[str, float] | None = None) -> dict:
+        try:
+            fraccion = parametro(self.cfg, "presupuesto_uc.rotacion_exploratoria")
+        except KeyError as exc:
+            raise ValueError("Fracción de rotación exploratoria fuera de rango") from exc
+        if isinstance(fraccion, bool) or not isinstance(fraccion, (int, float)) or not 0 <= fraccion <= 1:
+            raise ValueError("Fracción de rotación exploratoria fuera de rango")
         instante = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp.now(tz=self.reloj.zona)
         if instante.tzinfo is not None:
             instante = instante.tz_convert(self.reloj.zona).tz_localize(None)
@@ -977,8 +983,6 @@ class Bloque:
             rot = sorted([u["simbolo"] for u in universo if u["simbolo"] not in vistos],
                          key=lambda s: hashlib.sha256(f"{as_of.date()}{s}".encode()).hexdigest())[:int(parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))]
             fraccion = parametro(self.cfg, "presupuesto_uc.rotacion_exploratoria")
-            if isinstance(fraccion, bool) or not isinstance(fraccion, (int, float)) or not 0 <= fraccion <= 1:
-                raise ValueError("Fracción de rotación exploratoria fuera de rango")
             uc_cribado = presupuesto.asignado[clase] * parametro(self.cfg, "presupuesto_uc.reparto_fases.cribado")
             uc_rotacion = uc_cribado * fraccion if rot else 0.0
             if not uc_rotacion:

@@ -925,9 +925,7 @@ En una misma afirmación, el ejecutor compara los conjuntos de tríos de palabra
 
 La entrada exige fecha de publicación para las altas nuevas. Las fichas antiguas sin fecha quedan detrás de las fechadas a igual calidad. Usar la configuración de la instancia para indicar el directorio operativo.
 
-### INC-T185-01 [PROPUESTO] · Reparto del presupuesto de exploración
-
-El proveedor factura la llamada CT-06 completa. El presupuesto de exploración se conoce por separado; su coste efectivo dentro de esa llamada no se puede desglosar.
+**INC-T185-01 · 21-11-2026 · Reparto del presupuesto de exploración de N1 (Bloque A, T-185, PB-13).** [PROPUESTO] Se registra en F5 y en el CT-06 el reparto planificado de la bolsa de cribado de N1 (`presupuesto_uc.reparto_fases.cribado` × N1) entre vigentes y rotación (`presupuesto_uc.rotacion_exploratoria`). El proveedor factura el CT-06 entero y su coste por símbolo no se puede desglosar. Las celdas siguen en `seleccion.rotacion_exploratoria_celdas`. Detalle en `.docs/tickets/T-185`.
 
 ### INC-T188-01 [PROPUESTO] · Muestra para comparar decisiones del Broker
 

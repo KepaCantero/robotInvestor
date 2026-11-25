@@ -123,10 +123,13 @@
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_gc0_negativo_arrastre_verificado",
    "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion",
-   "11_Ejecutor/tests/test_t185_rotacion.py::test_rotacion_presupuestada_en_f5"
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_rotacion_presupuestada_en_f5",
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_h01_reparto_del_ct06_es_el_de_f5",
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_h02_fraccion_nula_no_explora",
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_h02_fraccion_invalida_falla_cerrado"
   ],
   "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración. Un ciclo registra en F5 el presupuesto de cribado de N1, la reserva de exploración y las celdas ofrecidas.",
-  "no_comprueba": "AS-06 corresponde al Auditor con el modelo real. La llamada conjunta no mide consumo efectivo por símbolo."
+  "no_comprueba": "AS-06 es del Auditor con el modelo real. La reserva de exploración es planificada. El Analista recibe las UC de cribado y de rotación en el CT-06, pero la llamada es una y su coste no se desglosa por símbolo. Las celdas ofrecidas siguen siendo seleccion.rotacion_exploratoria_celdas (2), sin derivarse de esas UC (INC-T185-01)."
  },
  "PB-14": {
   "cobertura": "AUTOMATICA",
