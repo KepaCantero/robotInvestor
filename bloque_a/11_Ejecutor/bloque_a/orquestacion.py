@@ -1601,7 +1601,7 @@ class Bloque:
 
     def _clusteres(self, analisis: dict, as_of, run_id: str) -> dict:
         proxies = sorted({f["proxy"] for an in analisis.values() for f in an["finalistas"] if f.get("_gc3")}
-                         | {simbolo_seguimiento(v) for c in analisis for v in self.vigentes(as_of, c) if simbolo_seguimiento(v)})
+                         | {simbolo for c in analisis for v in self.vigentes(as_of, c) if (simbolo := simbolo_seguimiento(v))})
         if not proxies:
             return {"asignacion": {}, "calc_id": None, "n_efectivo": 0}
         cl = parametro(self.cfg, "clusteres")
