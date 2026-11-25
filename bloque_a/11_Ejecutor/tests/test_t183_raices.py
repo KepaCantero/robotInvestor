@@ -148,7 +148,7 @@ def test_baja_recalcula_afirmaciones_y_entrega_del_ciclo_siguiente(tmp_path, uni
     evds = b.almacen.estado("F2", clave="evd_id")
     for opciones in r["paquete"]["clases"].values():
         for op in opciones["opciones"]:
-            ids = set(eid for cid in op["evidencias"] for eid in clms[cid]["evidencias_ps1"])
+            ids = {eid for cid in op["evidencias"] for eid in clms[cid]["evidencias_ps1"]}
             for ref in sorted({evds[eid]["ref_id"] for eid in ids if evds[eid]["ref_id"].startswith("REF-")}):
                 if b._ps1(sintesis.raices_de_evidencias(evds[e] for e in ids if evds[e]["ref_id"] != ref)):
                     break

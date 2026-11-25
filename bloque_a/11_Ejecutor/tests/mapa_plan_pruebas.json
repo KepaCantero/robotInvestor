@@ -331,6 +331,7 @@
    "11_Ejecutor/tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_dos_ciclos_y_baja_con_fuentes_supervivientes",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_reintento_tras_baja_persistida_antes_de_actualizar_clm",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_una_fuente_retirada_no_vuelve_a_ingresar",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_lectura_registro_con_sufijo_y_error_contextual"
   ],
