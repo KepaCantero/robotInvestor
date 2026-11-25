@@ -1467,7 +1467,6 @@ class Bloque:
                         if e.get("tipo_entrada") == "EVD"}
         por_id = {e["evd_id"]: e for e in evd_por_hash.values()}
         for f in finales:
-            f["_evidencias_ps1"] = []
             f["_evidencias"], f["_raices"], f["_manipulacion"] = [], {}, False
             for p in f["_piezas"]:
                 cl = clasif.get(i, {})
@@ -1541,7 +1540,6 @@ class Bloque:
                     ids_ps1 = clm.setdefault("evidencias_ps1", [])
                     if evd["evd_id"] not in ids_ps1:
                         ids_ps1.append(evd["evd_id"])
-                    f["_evidencias_ps1"].append(evd["evd_id"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
 

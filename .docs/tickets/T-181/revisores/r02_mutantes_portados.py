@@ -31,7 +31,7 @@ mutaciones = [
     (MF, 'afectadas == op.get("revision_bajas", {}).get("evidencias_retiradas")', 'False'),  # F3 en cada pasada
     (MF, 'if not destino or (r.get("doi") and not isinstance(r.get("doi_codigo_http"), int)):', 'if not destino:'),
     (ORQ, 'if any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]', 'if False and any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]'),
-    (ORQ, 'f["_evidencias_ps1"].append(evd["evd_id"])', 'pass'),
+    (ORQ, 'f["_evidencias_ps1"] = list(respaldos)', 'f["_evidencias_ps1"] = []'),
     (CLI, 'if dia <= datos["fecha"]}', '}'),
 ]
 
