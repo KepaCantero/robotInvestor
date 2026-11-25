@@ -702,7 +702,7 @@ class Bloque:
         # F1–F4 por clase (paralelo, R25); las escrituras se hacen después en orden determinista
         hilos = int(parametro(self.cfg, "paralelismo.hilos_analistas"))
         # Señales del Motor en orden determinista (los identificadores CALC- no dependen del paralelismo)
-        pre = {}
+        pre: dict[str, tuple[dict[str, dict], list[str]] | Exception] = {}
         for c in clases:
             try:
                 pre[c] = self.senales_clase(c, as_of, run_id)
