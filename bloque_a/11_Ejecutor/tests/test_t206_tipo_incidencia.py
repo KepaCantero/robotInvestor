@@ -414,10 +414,10 @@ def test_ca5_ciclo_mock_por_defecto_con_un_dato_invalido_solo_deja_tipos_del_esq
     b = nuevo_bloque(tmp_path, universo, cfg=cargar_config())
     valor_en = b.proveedor.valor_en
 
-    def malo(simbolo, fecha):
+    def malo(simbolo, fecha, **criterios_publicacion):
         if simbolo == "EURUSD=X":
             raise DatosInvalidos("HT-01: cierre no positivo simulado")
-        return valor_en(simbolo, fecha)
+        return valor_en(simbolo, fecha, **criterios_publicacion)
     monkeypatch.setattr(b.proveedor, "valor_en", malo)
     r = b.ciclo(AS_OF)
     assert r["paquete"]["clases"]["DIV"]["opciones"]

@@ -14,3 +14,4 @@
 | astra/2026-11-21_t181-bajas | estado | T-181 local. Revisión de referencias del Bloque A y pruebas de propagación. | vigente |
 | astra/2026-11-21_encargos-bloque-a | estado | Encargos locales C-39 a C-47. Alcance, pruebas y relevo para Claude. | vigente |
 | astra/2026-11-25_r02_c38-c47 | estado | Segunda entrega local de los diez tickets del Bloque A y pruebas para Claude. | vigente |
+| astra/2026-11-26_correcciones_propia_revision | leccion | Verificar retiros históricos, reintentos, lenguaje financiero, dos recurrencias distintas y primeras publicaciones. | vigente |

@@ -1,6 +1,8 @@
 """Tratamiento de incidencias de HT-02 por los custodios de F7, F8 y F9."""
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 import tempfile
@@ -12,22 +14,20 @@ from .configuracion import parametro
 from .contratos import contiene_credenciales
 from .herramientas import ht02
 from .procedencia import cumple_ps1
-from .referencias import nivel_de_q
+from .referencias import (
+    MARCA_HISTORIAL,
+    historial_bajas,
+    lineas_registro,
+    metadatos_ficha,
+    nivel_de_q,
+)
 
 CUSTODIOS = {"F7": "AG-14", "F8": "AG-15", "F9": "AG-16"}
 
 
 def detalle_bajas(lineas, archivo="Registro de bajas"):
-    nivel = 0
-    for numero, linea in enumerate(lineas, 1):
-        titulo = ht02.modulo.RE_TITULO.match(linea)
-        if titulo:
-            profundidad = len(titulo.group(1))
-            if "registro de bajas" in ht02.modulo._norm_clave(linea):
-                nivel = profundidad
-            elif profundidad <= nivel:
-                nivel = 0
-        elif nivel and linea.startswith("|"):
+    for numero, linea in lineas_registro(lineas):
+        if linea.startswith("|"):
             partes = re.split(r"(?<!\\)\|", linea.strip().strip("|"))
             if len(partes) == 5:
                 rid, _, motivo, fecha, _ = (p.strip() for p in partes)
@@ -70,7 +70,6 @@ def _degradar(lineas, ficha, revision, archivo, cfg):
 
 def _sin_copia(r):
     """Una caída del servicio de archivo tampoco demuestra que falte una alternativa."""
-    import json
     from urllib.parse import urlencode
     destino = r.get("url") or r.get("url_final")
     if not destino or (r.get("doi") and not isinstance(r.get("doi_codigo_http"), int)):
@@ -87,18 +86,31 @@ def _sin_copia(r):
     return isinstance(datos, dict) and datos.get("archived_snapshots") == {}
 
 
+def _huella_revision(revision):
+    return hashlib.sha256(json.dumps(revision, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def tratar(archivo, original, informe, revisiones, cfg=None):
     """Calcula todo antes de publicar. Cada revisión local identifica la huella examinada."""
     lineas = original.splitlines(keepends=True)
     fecha = date.fromisoformat(informe["fecha"])
-    if informe["resumen"]["incidencia_red"]:
-        if revisiones:
-            raise ValueError("La revisión exige una observación HTTP del barrido")
-        return original
     estados = []
     fichas = {f.id: f for f in ht02.leer_fichas(lineas)}
-    if set(revisiones) - {r["id"] for r in informe["resultados"]}:
-        raise ValueError("Revisión sin referencia en el barrido")
+    observadas = {r["id"] for r in informe["resultados"]}
+    ausentes = set(revisiones) - observadas
+    if ausentes:
+        bajas = set(bajas_registradas(lineas))
+        for registro in historial_bajas(lineas, bajas, archivo):
+            rid = registro["ficha"]["ref_id"]
+            if (rid in ausentes and registro["fecha"] <= fecha.isoformat() and
+                    registro.get("huella_revision") == _huella_revision(revisiones[rid]) and rid not in fichas):
+                ausentes.remove(rid)
+        if ausentes:
+            raise ValueError("Revisión sin referencia en el barrido")
+    if informe["resumen"]["incidencia_red"]:
+        if observadas.intersection(revisiones):
+            raise ValueError("La revisión exige una observación HTTP del barrido")
+        return original
     for r in informe["resultados"]:
         if r.get("codigo_http") is None and r.get("doi_codigo_http") is None:
             if r["id"] in revisiones:
@@ -115,6 +127,11 @@ def tratar(archivo, original, informe, revisiones, cfg=None):
                 and isinstance(codigo, int) and 400 <= codigo < 600 and not r.get("copia_archivada")
                 and not ficha.campo("Copia archivada") and not r.get("retractacion") and _sin_copia(r)):
             baja = "Enlace roto confirmado y sin alternativa tras dos barridos"
+        if (rev and r["estado"] == "OK" and r.get("hash") and r["hash"] == ficha.campo("Hash de contenido")
+                and ficha.campo("Huella de revisión del custodio") == _huella_revision(rev)):
+            # También puede haberse publicado una reparación o degradación antes de la retractación de este lote.
+            estados.append(r)
+            continue
         if rev:
             motivo = rev.get("motivo")
             if not r.get("hash") or rev.get("hash") != r["hash"] or not isinstance(motivo, str) or not motivo.strip() or len(motivo.splitlines()) != 1:
@@ -140,8 +157,19 @@ def tratar(archivo, original, informe, revisiones, cfg=None):
                 r = {**r, "estado": "OK", "hash": copia["hash"], "huella": copia["huella"]}
             else:
                 raise ValueError("La decisión no corresponde a la incidencia observada")
+            if not baja:
+                ficha = next(f for f in ht02.leer_fichas(lineas) if f.id == ficha.id)
+                ht02.modulo._fijar_campo(lineas, ficha, "Huella de revisión del custodio", _huella_revision(rev))
         if baja:
             lineas, _ = ht02.borrar_ficha(lineas, ficha.id, baja, fecha)
+            registro = {"ficha": metadatos_ficha(ficha, archivo), "fecha": fecha.isoformat()}
+            if rev:
+                registro["huella_revision"] = _huella_revision(rev)
+            # El historial y la tabla se publican juntos. El comentario queda fuera de las fichas HT-02.
+            cabecera = next(i for i, linea in enumerate(lineas) if ht02.modulo.RE_TITULO.match(linea)
+                            and "registro de bajas" in ht02.modulo._norm_clave(linea))
+            datos = json.dumps(registro, ensure_ascii=True).replace("<", r"\u003c").replace(">", r"\u003e")
+            lineas.insert(cabecera + 1, MARCA_HISTORIAL + datos + " -->\n")
         else:
             estados.append(r)
     return "".join(ht02.aplicar_resultados(lineas, estados))

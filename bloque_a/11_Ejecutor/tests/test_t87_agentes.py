@@ -113,8 +113,8 @@ def test_referencia_no_ofrecida_no_llega_a_f2(tmp_path, universo):
     assert futura not in str(sdk.llamadas[0]["messages"])
 
 
-def test_referencia_con_solo_anio_disponible_al_terminar_el_anio():
-    ref = Referencias.__new__(Referencias)
+def test_referencia_con_solo_anio_disponible_al_terminar_el_anio(tmp_path):
+    ref = Referencias(config_pruebas(), rutas={"F7": tmp_path / "catalogo.md"})
     ref.fichas = {"F7": [{"ref_id":"prueba", "titulo":"prueba", "q":1, "nivel":"A", "tematica":"TA-05", "anio":2025}]}
     def consultar(fecha):
         return ref.para_clase("RV", fecha, "backtest", archivos=("F7",))["referencias"]

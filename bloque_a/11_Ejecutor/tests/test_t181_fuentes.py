@@ -332,3 +332,118 @@ def test_reintento_tras_baja_persistida_antes_de_actualizar_clm(tmp_path, univer
     registros = almacen.leer("F2")
     revisar_bajas(bloque, DIA, "RUN-3")
     assert almacen.leer("F2") == registros
+
+
+@pytest.mark.parametrize("interrumpir", [False, True], ids=["consulta-historica", "reintento"])
+def test_retractacion_cli_al_corte_y_tras_interrupcion(tmp_path, monkeypatch, interrumpir, universo):
+    from bloque_a.almacen import Almacen
+    from bloque_a.herramientas import ht02
+    from bloque_a.referencias import ARCHIVOS_REF, Referencias
+    from conftest import config_pruebas
+
+    from bloque_a import cli, mantenimiento_fuentes
+
+    rutas = {k: tmp_path / f"{nombre} - V1.0.md" for k, nombre in ARCHIVOS_REF.items()}
+    ficha = FICHA + "- **Temática:** TA-05\n- **Año:** 2020\n- **Tipo de fuente:** primaria\n"
+    for k, ruta in rutas.items():
+        ruta.write_text(ficha if k == "F7" else "")
+    def respuesta_editor(url, metodo, cfg):
+        return {"codigo": 200, "url_final": url, "redirecciones": [], "content_type": "text/html",
+                "error": None, "cuerpo": b"This article has been retracted by its publisher."}, 1
+
+    monkeypatch.setattr(ht02.modulo, "_con_reintentos", respuesta_editor)
+    monkeypatch.setattr(cli, "ruta", lambda *a: tmp_path)
+    estado = tmp_path / "estado"
+    almacen = Almacen(estado)
+    almacen.reloj.fijar(DIA)
+    almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": "EVD-2", "ref_id": "REF-" + RID,
+                                      "estado_verificacion": "VERIFICADA"})
+    args = ["--estado", str(estado), "--salida", str(tmp_path), "--as-of", DIA, "verificar-enlaces"]
+    lector = Referencias(config_pruebas(), rutas)
+    def consulta(lector, corte):
+        return lector.para_clase("RV", corte, "backtest", archivos=("F7",))["referencias"]
+    anterior = "2026-06-04"
+    esperado = consulta(lector, anterior)
+    metadatos = lector.por_id(RID, anterior)
+    assert [f["ref_id"] for f in esperado] == ["REF-" + RID]
+    assert cli.main(args) == 0
+    fila = json.loads((tmp_path / "ht02_F7.json").read_text())["resultados"][0]
+    decision = {"accion": "RETRACTADA", "hash": fila["hash"], "motivo": "Confirmada por el editor"}
+    ruta_revision = tmp_path / "revision.json"
+    ruta_revision.write_text(json.dumps({"F7": {RID: decision}}))
+    aplicar = [*args, "--aplicar", "--revisiones", str(ruta_revision)]
+    if interrumpir:
+        def fallo(*args, **kwargs):
+            raise OSError("interrupción después de publicar")
+        with monkeypatch.context() as parche:
+            parche.setattr(mantenimiento_fuentes, "avisar_curador", fallo)
+            with pytest.raises(OSError, match="después de publicar"):
+                cli.main(aplicar)
+        assert almacen.estado("F2", clave="evd_id")["EVD-2"]["estado_verificacion"] == "VERIFICADA"
+    assert cli.main(aplicar) == 0
+    if interrumpir:
+        registros = almacen.leer("F2")
+        assert cli.main(aplicar) == 0
+        assert almacen.leer("F2") == registros
+        assert len(almacen.estado("F2", clave="baja_id")) == 1
+        assert almacen.estado("F2", clave="evd_id")["EVD-2"]["estado_verificacion"] == "FUENTE_RETIRADA"
+        assert list(bajas_registradas(rutas["F7"].read_text().splitlines())) == [(RID, DIA)]
+        persistido = rutas["F7"].read_text()
+        sin_red = {"fecha": DIA, "resumen": {"incidencia_red": True}, "resultados": []}
+        assert tratar("F7", persistido, sin_red, {RID: decision}) == persistido
+        ruta_revision.write_text(json.dumps({"F7": {RID: {**decision, "hash": "distinta"}}}))
+        with pytest.raises(ValueError, match="Revisión sin referencia"):
+            cli.main(aplicar)
+    else:
+        lector.actualizar()
+        for leido in (lector, Referencias(config_pruebas(), rutas)):
+            assert consulta(leido, anterior) == esperado
+            assert leido.por_id(RID, anterior) == metadatos
+            assert consulta(leido, DIA) == []
+            assert leido.por_id(RID, DIA) is None
+            assert consulta(leido, "2019-12-31") == []
+
+        bloque = nuevo_bloque(tmp_path / "backtest", universo)
+        bloque.referencias.rutas = rutas
+        bloque.referencias.actualizar()
+        dia = bloque.fijar_fecha(anterior)
+        pieza = {"fuente": "REF-" + RID, "afirmacion": "Informe del editor", "direccion": "favorable", "origen": "AG-14"}
+        opcion = {"proxy": "X", "senales": {}, "_piezas": [pieza], "_refs_ofrecidas": ["REF-" + RID]}
+        bloque._filtrar_evidencia([opcion], dia)
+        assert opcion["_piezas"] == [pieza]
+        bloque._registrar_evidencia_clase({"nivel": "N1", "clase": "RV", "finalistas": [opcion]}, dia, "RUN-1")
+        evidencia, = bloque.almacen.estado("F2", clave="evd_id").values()
+        assert (evidencia["nivel_fuente"], evidencia["tipo_fuente"], evidencia["anio_publicacion"]) == ("A", "PRIMARIA", 2020)
+
+
+def test_reintento_lote_con_degradacion_y_retractacion():
+    segunda = "ANA-DOC-0002"
+    catalogo = FICHA + FICHA.replace(RID, segunda)
+    datos = barrido(estado="CONTENIDO_CAMBIADO", codigo_http=200, hash="nuevo", huella="abc")
+    datos["resultados"].append({**datos["resultados"][0], "id": segunda, "retractacion": ["editor"]})
+    decisiones = {RID: {"accion": "DEGRADAR", "hash": "nuevo", "puntos": [20, 10, 15, 5, 8, 7, 10], "motivo": "Revisión"},
+                  segunda: {"accion": "RETRACTADA", "hash": "nuevo", "motivo": "Confirmación del editor"}}
+    actualizado = tratar("F7", catalogo, datos, decisiones)
+    siguiente = barrido(estado="OK", codigo_http=200, hash="nuevo", huella="abc")
+    recuperado = tratar("F7", actualizado, siguiente, decisiones)
+    assert "Q 75 (B)" in recuperado
+    assert list(bajas_registradas(recuperado.splitlines())) == [(segunda, DIA)]
+    assert tratar("F7", recuperado, siguiente, decisiones) == recuperado
+    with pytest.raises(ValueError):
+        tratar("F7", actualizado, siguiente, {**decisiones, RID: {**decisiones[RID], "motivo": "otra decisión"}})
+
+
+
+def test_baja_antigua_sin_instantanea(tmp_path):
+    from bloque_a.referencias import Referencias
+    from conftest import config_pruebas
+
+    catalogo = "## Registro de bajas (R24)\n| ANA-DOC-0001 | Título | Enlace roto | 2026-06-05 | — |\n"
+    ruta = tmp_path / "F7.md"
+    ruta.write_text(catalogo)
+    lector = Referencias(config_pruebas(), {"F7": ruta})
+    assert lector.bajas["F7"] == [(RID, DIA)]
+    assert lector.motivos_bajas["F7", "REF-" + RID, DIA] == "Enlace roto"
+    assert lector.por_id(RID, "2026-06-04") is None
+    with pytest.raises(ValueError, match="Revisión sin referencia"):
+        tratar("F7", catalogo, {**barrido(), "resultados": []}, {RID: {"accion": "RETRACTADA", "hash": "ajena"}})

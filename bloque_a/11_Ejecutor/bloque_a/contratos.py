@@ -110,16 +110,42 @@ PATRONES_EST06 = (
     r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions",
     r"disregard\s+(?:the\s+)?(?:previous|system)\s+(?:instructions|prompt)",
     r"(?:asigna|pon|sube)\s+(?:una\s+)?(?:(?:la\s+)?puntuaci[oó]n|nota|(?-i:[AETRK]{1,2}))\s*(?:=|de|a)\s*\d{2,3}",
-    r"(?:nuevo|new)\s+system\s+prompt", r"act[uú]a\s+como\b",
+    r"(?:nuevo|new)\s+system\s+prompt",
+    r"(?P<actua_como>\bact[uú]a\s+como\b)",
     r"a\s+partir\s+de\s+ahora", r"responde\s+solo", r"llama\s+a\s+la\s+herramienta",
     r"(?m:^\s*(?:system|assistant)\s*:)", r"[\u200b-\u200f\u2060\ufeff]", r"<!--",
     r"[?&](?:tool|function|action)=", r"<\s*/?\s*system\s*>",
     r"(?:env[ií]a|reenv[ií]a|manda)\s+(?:esto|el\s+informe|los\s+datos)\s+a",
 )
-RE_EST06 = re.compile("|".join(PATRONES_EST06), re.IGNORECASE)
+# Un sujeto financiero contiguo distingue el indicativo de la orden en segunda
+# persona. Se admiten calificativos de mercado sin cruzar signos ni saltos de línea.
+RE_SUJETO_FINANCIERO = re.compile(
+    r"\b(?:el|la|un|una|este|esta|ese|esa)[^\S\r\n]+"
+    r"(?:activo|bono|cartera|cobertura|coste|crédito|divisa|dólar|efectivo|euro|fondo|franco|"
+    r"índice|liquidez|moneda|oro|petróleo|plata|precio|reserva|seguro|tipo|yen)"
+    r"(?:[^\S\r\n]+(?:central|corporativo|de referencia|internacional|local|público|real|soberano|suizo))*"
+    r"[^\S\r\n]+\Z", re.IGNORECASE)
+
+
+class DetectorInstrucciones:
+    def __init__(self, patrones):
+        self.patron = re.compile("|".join(patrones), re.IGNORECASE)
+
+    @staticmethod
+    def _es_instruccion(m):
+        return m.lastgroup != "actua_como" or not RE_SUJETO_FINANCIERO.search(m.string, 0, m.start())
+
+    def search(self, texto):
+        return next((m for m in self.patron.finditer(texto) if self._es_instruccion(m)), None)
+
+    def sub(self, reemplazo, texto):
+        return self.patron.sub(lambda m: reemplazo(m) if self._es_instruccion(m) else m.group(), texto)
+
+
+RE_EST06 = DetectorInstrucciones(PATRONES_EST06)
 PATRONES_INYECCION = (*PATRONES_EST06, r"(?:cambia|modifica)\s+(?:el|los)\s+(?:umbral|umbrales|par[aá]metros?)",
                       r"you\s+are\s+now")
-RE_INYECCION = re.compile("|".join(PATRONES_INYECCION), re.IGNORECASE)
+RE_INYECCION = DetectorInstrucciones(PATRONES_INYECCION)
 MARCA_RETIRADA = "[INSTRUCCION_INCRUSTADA_RETIRADA]"
 
 

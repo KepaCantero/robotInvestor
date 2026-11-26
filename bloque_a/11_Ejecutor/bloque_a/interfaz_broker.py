@@ -457,8 +457,9 @@ class ConsultasBroker:
     def _recurrencia(self, tipo: str, motivo: str, as_of) -> None:
         n, semanas = int(parametro(self.b.cfg, "consultas_broker.recurrente.repeticiones")), int(parametro(self.b.cfg, "consultas_broker.recurrente.semanas"))
         desde = pd.Timestamp(as_of) - pd.Timedelta(weeks=semanas)
-        iguales = [c for c in self.b.almacen.leer("F5", as_of) if c.get("tipo_entrada") == "CNS" and c.get("sentido") == "SALIENTE"
-                   and c.get("tipo") == tipo and c.get("motivo") == motivo and pd.Timestamp(c["_fecha"]) >= desde]
+        del_motivo = [c for c in self.b.almacen.leer("F5", as_of) if c.get("tipo_entrada") == "CNS" and c.get("sentido") == "SALIENTE"
+                      and c.get("tipo") == tipo and c.get("motivo") == motivo]
+        iguales = [c for c in del_motivo if pd.Timestamp(c["_fecha"]) >= desde]
         if len(iguales) == n:
             ids = [c["cns_id"] for c in iguales]
             self.b.mensajeria.crear("CT-22", "AG-01", "AG-20", {"tipo_aviso": "CONSULTA_RECURRENTE", "cns_ids": ids, "tipo_consulta": tipo,
@@ -475,7 +476,8 @@ class ConsultasBroker:
                 self.b.evaluador._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-01", "AG-17"],
                                                        "metodo": "consulta_recurrente_ct23"},
                     "PRODUCTO", f"La misma duda aparece en {len(por_run)} análisis en {semanas} semanas.",
-                    "Precisar el dato en la admisión del CT-01.", "recurrente", list(por_run.values()), len(por_run))
+                    "Precisar el dato en la admisión del CT-01.", "recurrente", list(por_run.values()), len(por_run),
+                    consultas_del_motivo={c["cns_id"] for c in del_motivo})
 
 
 class Credenciales:

@@ -184,3 +184,61 @@ def test_recupera_el_aviso_si_la_escritura_de_ha_falla(tmp_path, universo, monke
     correcciones = [e["id"] for e in b.almacen.leer("F6") if e.get("prg_corregido")]
     avisos = [e["correccion_f6"] for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "COR"]
     assert len(set(correcciones)) == 2 and sorted(correcciones) == sorted(avisos)
+
+
+@pytest.mark.parametrize(("publicaciones", "estado"), [
+    ("2026-06-19,90\n2026-06-15,110", "RESUELTO"),
+    ("2026-06-15,110\n2026-06-15,90", "NO_RESOLUBLE"),
+    ("2026-06-15,inválido\n2026-06-19,110", "NO_RESOLUBLE"),
+])
+def test_resolver_con_ediciones_visibles(tmp_path, universo, publicaciones, estado):
+    from bloque_a.herramientas.ht01_datos import ProveedorCSV
+    from bloque_a.llm import MockClient
+    from bloque_a.orquestacion import Bloque
+
+    texto = "fecha,fecha_publicacion,valor\n2026-06-05,2026-06-05,100\n"
+    (tmp_path / "MACRO.csv").write_text(texto + "".join(f"2026-06-12,{p}\n" for p in publicaciones.splitlines()))
+    b = Bloque(cargar_config(), ProveedorCSV(tmp_path), universo, MockClient(), tmp_path / "estado", tmp_path / "ent")
+    b.fijar_fecha("2026-06-05")
+    ref = b.evaluador.tasa_base("MACRO", None, "DIV", 5, True, "2026-06-05")
+    pid = b.almacen.nuevo_id("PRG")
+    b.almacen.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "estado": "ABIERTO", "prg_id": pid,
+        "fecha_emision": "2026-06-05", "fecha_resolucion": "2026-06-12", "nivel_referencia": {"fecha": "2026-06-05", "valor": 100},
+        "prob_interna": .7, "clase": "DIV", "horizonte": "H1", "sentido": "POSITIVO", "tipo_pronostico": "DIRECCIONAL",
+        "variable": {"serie_ht01": "MACRO"}, "referencia_ingenua": ref})
+    b.fijar_fecha("2026-06-12")
+    assert b.evaluador.resolver("2026-06-12") == []
+    b.fijar_fecha("2026-06-29")
+    p, = b.evaluador.resolver("2026-06-29")
+    assert p["estado"] == estado
+    if estado == "RESUELTO":
+        assert p["resolucion"]["valor_observado"] == pytest.approx(.1)
+        assert p["resolucion"]["resultado_binario"] == 1
+        admitido, = b.evaluador.resueltos("2026-06-29")
+        assert admitido["resolucion"]["puntuaciones"]["brier"] == pytest.approx(.09)
+
+
+@pytest.mark.parametrize("referencia", [None, "INDICE", "CESTA"])
+def test_tasa_historica_solo_con_publicaciones_conocidas(tmp_path, universo, referencia):
+    from bloque_a.herramientas.ht01_datos import ProveedorCSV
+    from bloque_a.llm import MockClient
+    from bloque_a.orquestacion import Bloque
+
+    fechas = pd.bdate_range(end="2026-06-05", periods=8)
+    for simbolo in ("MACRO", "INDICE"):
+        filas = ["fecha,valor,fecha_publicacion"]
+        for i, fecha in enumerate(fechas):
+            publicacion = "2026-06-18" if i == 7 else str(fecha.date())
+            valor = (80 if i == 7 else 100 + i) if simbolo == "MACRO" else 100
+            filas.append(f"{fecha.date()},{valor},{publicacion}")
+        (tmp_path / f"{simbolo}.csv").write_text("\n".join(filas))
+    # La cesta de DIV contiene solo el índice. El proxy es una serie externa.
+    univ = universo.iloc[:1].copy()
+    univ["simbolo"], univ["clase"] = "INDICE", "DIV"
+    b = Bloque(cargar_config(), ProveedorCSV(tmp_path), univ, MockClient(), tmp_path / "estado", tmp_path / "ent")
+    b.fijar_fecha("2026-06-19")
+    tasa = b.evaluador.tasa_base("MACRO", referencia, "DIV", 1, True, "2026-06-05")
+    assert tasa["n_ventanas"] == 6
+    assert tasa["valor_o_prob"] == .95  # seis avances en seis ventanas, recorte por defecto
+    assert {p["as_of"] for p in b.proveedor.registro_peticiones if p["simbolo"] in ("INDICE", "MACRO")
+            and p["inicio"] is not None} == {"2026-06-05"}

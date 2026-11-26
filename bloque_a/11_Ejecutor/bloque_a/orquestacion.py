@@ -190,7 +190,7 @@ class Bloque:
         if self.v6 and cliente_contradictor is not None:   # idea 8: Contradictor de otro proveedor
             self.agentes.clientes["AG-11"] = cliente_contradictor
         self.motor = Motor(self.almacen, proveedor, cfg, self.contabilidad)
-        self.referencias = Referencias(cfg)
+        self.referencias = Referencias(cfg, reloj=self.reloj)
         self.referencias.registro_bajas_f9 = self.almacen.carpeta / "F9_bajas.md"
         # T-125 r02 (QA r01, H-04): el Evaluador valida la fuente de los pronósticos de fuentes contra F9
         self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo, referencias=self.referencias)

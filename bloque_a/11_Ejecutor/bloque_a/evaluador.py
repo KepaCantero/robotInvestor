@@ -522,13 +522,8 @@ class Evaluador:
     def _base_conocida(self, simbolo, fecha):
         """T-92 (auditoría de Astra, D01): el nivel inicial es el que se conocía al emitir (corte de conocimiento de HT-01),
         no el que el proveedor publica después (una revisión posterior no mueve la base)."""
-        serie = self.proveedor.serie(simbolo, fin=fecha, conocido_el=fecha)
-        if serie.empty:
-            raise DatosNoDisponibles(f"{simbolo}: falta el dato conocido al emitir")
-        # T-92 (QA r01, H-06): el cierre de la base pasa la misma validación que cualquier cierre de HT-01 (no positivo, no
-        # finito, booleano o fecha repetida → `DatosInvalidos`, que es un `DatosNoDisponibles`)
-        ult = self.proveedor._validar_cierres(simbolo, serie[serie.index == serie.index.max()])
-        return {"valor": float(ult.iloc[-1]), "fecha": str(ult.index[-1].date())}
+        dia, valor = self.proveedor.valor_en(simbolo, fecha, conocido_el=fecha, primera_publicacion=True)
+        return {"valor": valor, "fecha": str(dia.date())}
 
     def bases_cesta(self, clase, fecha, horizonte: str | None = None):
         """T-92 (D02): los miembros de la CESTA observables al emitir, con su nivel inicial. Se congelan en F4 al emitir; para
@@ -554,16 +549,16 @@ class Evaluador:
         if base is None:
             base = self._base_conocida(simbolo, f0)
         try:
-            if isinstance(base, dict):
-                v0 = base.get("valor")
-                d0 = pd.Timestamp(base["fecha"]) if base.get("fecha") else self.proveedor.valor_en(simbolo, f0)[0]
-            else:   # registros antiguos con el nivel como número suelto
-                v0, d0 = base, self.proveedor.valor_en(simbolo, f0)[0]
+            v0 = base.get("valor") if isinstance(base, dict) else base
+            if isinstance(base, dict) and base.get("fecha"):
+                d0 = pd.Timestamp(base["fecha"])
+            else:   # registros antiguos con nivel congelado sin fecha
+                d0, _ = self.proveedor.valor_en(simbolo, f0, conocido_el=f0, primera_publicacion=True)
         except (ValueError, TypeError, OverflowError) as e:   # T-92 (QA r01, H-14): una fecha ilegible no tumba C5
             raise DatosNoDisponibles(f"{simbolo}: fecha de la base ilegible ({type(e).__name__})") from None
         if pd.isna(d0) or d0 > pd.Timestamp(f0):
             raise DatosNoDisponibles(f"{simbolo}: base posterior a la emisión")
-        d1, v1 = self.proveedor.valor_en(simbolo, f1)
+        d1, v1 = self.proveedor.valor_en(simbolo, f1, primera_publicacion=True)
         # T-92 (QA r01, H-06): una base no positiva tampoco vale (los cierres de HT-01 son precios > 0)
         if (isinstance(v0, bool) or not isinstance(v0, (float, int)) or not math.isfinite(v0) or v0 <= 0
                 or not math.isfinite(v1)):
@@ -608,7 +603,11 @@ class Evaluador:
         """RI-TB: frecuencia histórica (ventanas no solapadas de 3 años hasta as_of) del suceso pronosticado."""
         tb = parametro(self.cfg, "tasa_base")   # T-65 (CA-14 de T-53): ventana, mínimo, valor sin historia y recorte
         ini = pd.Timestamp(as_of) - pd.DateOffset(years=int(tb["ventana_anios"]))
-        s = self.proveedor.cierres(proxy, ini, as_of)
+
+        def cierres_conocidos(simbolo):
+            return self.proveedor.cierres(simbolo, ini, as_of, conocido_el=as_of, primera_publicacion=True)
+
+        s = cierres_conocidos(proxy)
         serie = s.pct_change(sesiones).iloc[sesiones::sesiones] if len(s) > sesiones else pd.Series(dtype=float)
         excluidos_cesta: list[str] = []
         if referencia and referencia != proxy:
@@ -618,14 +617,14 @@ class Evaluador:
                 comp = []
                 for x in self.simbolos_clase(clase):
                     try:
-                        comp.append(self.proveedor.cierres(x, ini, as_of).pct_change(sesiones))
+                        comp.append(cierres_conocidos(x).pct_change(sesiones))
                     except DatosNoDisponibles:
                         excluidos_cesta.append(x)
                 if not comp:
                     raise DatosNoDisponibles(f"Cesta {clase} sin datos entre {ini.date()} y {pd.Timestamp(as_of).date()}")
                 ref = pd.concat(comp, axis=1).mean(axis=1)
             else:
-                ref = self.proveedor.cierres(referencia, ini, as_of).pct_change(sesiones)
+                ref = cierres_conocidos(referencia).pct_change(sesiones)
             serie = (serie - ref.reindex(serie.index)).dropna()
         serie = serie.dropna()
         min_v, (lo, hi) = int(tb["min_ventanas"]), (float(x) for x in tb["recorte"])
@@ -1615,10 +1614,11 @@ class Evaluador:
         return [{k: l.get(k) for k in ("id", "ambito", "tipo", "observacion", "recomendacion", "fuerza", "fecha")} for l in lst[:max_n]]
 
     def _nueva_leccion(self, as_of, ambito: dict, tipo: str, obs: str, rec: str, fuerza: str, evidencia: list[str], n: int,
-                       origen: str = "DETERMINISTA") -> dict | None:
+                       origen: str = "DETERMINISTA", consultas_del_motivo: set[str] | None = None) -> dict | None:
         for l in self.almacen.estado("F6", as_of, clave="id").values():
             if l.get("tipo_entrada") == "LEC" and l.get("estado") == "VIGENTE" and l.get("tipo") == tipo \
-                    and l.get("ambito") == ambito and pd.Timestamp(l["caducidad"]) >= pd.Timestamp(as_of):
+                    and l.get("ambito") == ambito and pd.Timestamp(l["caducidad"]) >= pd.Timestamp(as_of) \
+                    and (consultas_del_motivo is None or not consultas_del_motivo.isdisjoint(l.get("evidencia", []))):
                 return None
         cad = pd.Timestamp(as_of) + pd.DateOffset(months=CADUCIDAD_MESES.get(fuerza, 3))
         lec = {"tipo_entrada": "LEC", "id": self.almacen.nuevo_id("LEC"), "fecha": str(pd.Timestamp(as_of).date()), "ambito": ambito,

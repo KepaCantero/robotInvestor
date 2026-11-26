@@ -99,8 +99,9 @@ class ProveedorDatos:
     def tiene(self, simbolo: str) -> bool:
         return simbolo in set(self.simbolos())
 
-    def serie(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None, *, conocido_el: Fecha | None = None) -> pd.DataFrame:
-        """Observaciones de `simbolo` entre `inicio` y `fin` (inclusive), nunca posteriores a as_of."""
+    def serie(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None, *,
+              conocido_el: Fecha | None = None, primera_publicacion: bool = False) -> pd.DataFrame:
+        """Observaciones visibles al corte. En evaluación se puede pedir la primera edición de cada fecha."""
         if self._as_of is None:
             raise RuntimeError("HT-01: fije la fecha as_of (fijar_as_of) antes de pedir datos")
         corte = pd.Timestamp(conocido_el).normalize() if conocido_el is not None else self._as_of
@@ -121,15 +122,22 @@ class ProveedorDatos:
         if "fecha_publicacion" in df.columns:
             # Una fecha de publicación no interpretable no se da por publicada (falla cerrado)
             pub, invalida = _fechas_publicacion(df["fecha_publicacion"])
-            df = df[~invalida & (pub.isna() | (pub <= corte))]
+            visible = ~invalida & (pub.isna() | (pub <= corte))
+            df = df[visible]
+            if primera_publicacion and df.index.has_duplicates:
+                # Una publicación vacía significa sin retraso (fecha de la observación).
+                # Si dos filas comparten la primera edición, siguen duplicadas y se rechazan.
+                edicion = pub[visible].fillna(df.index.to_series())
+                df = df[edicion == edicion.groupby(level=0).transform("min")]
         if len(df) and df.index.max() > corte:  # defensa en profundidad
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
         df = df.copy()
         df["_duplicada"] = df.index.duplicated(keep=False)   # solo entre las filas visibles (QA r04 de T-65, H-25)
         return df
 
-    def _tramo(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.DataFrame:
-        df = self.serie(simbolo, inicio, fin)
+    def _tramo(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None, *,
+               conocido_el: Fecha | None = None, primera_publicacion: bool = False) -> pd.DataFrame:
+        df = self.serie(simbolo, inicio, fin, conocido_el=conocido_el, primera_publicacion=primera_publicacion)
         if df.empty:
             raise DatosNoDisponibles(f"HT-01: sin datos de {simbolo} en el rango")
         return df
@@ -155,15 +163,18 @@ class ProveedorDatos:
                                  f"(p. ej., {', '.join(ej)}); serie rechazada")
         return s
 
-    def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
+    def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None, *,
+                conocido_el: Fecha | None = None, primera_publicacion: bool = False) -> pd.Series:
         """Cierres de [inicio, fin]; la serie se rechaza (`DatosInvalidos`) si algún cierre del rango pedido es ≤ 0 o no
         finito. Lo que queda fuera del rango no cuenta."""
-        return self._validar_cierres(simbolo, self._tramo(simbolo, inicio, fin))
+        df = self._tramo(simbolo, inicio, fin, conocido_el=conocido_el, primera_publicacion=primera_publicacion)
+        return self._validar_cierres(simbolo, df)
 
-    def valor_en(self, simbolo: str, fecha: Fecha) -> tuple[pd.Timestamp, float]:
+    def valor_en(self, simbolo: str, fecha: Fecha, *, conocido_el: Fecha | None = None,
+                 primera_publicacion: bool = False) -> tuple[pd.Timestamp, float]:
         """Último cierre con fecha <= `fecha` (que debe ser <= as_of). Se valida solo ese cierre (QA r01 de T-65, H-01):
         un cierre malo antiguo no deja sin precio a un símbolo sano."""
-        df = self._tramo(simbolo, None, fecha)
+        df = self._tramo(simbolo, None, fecha, conocido_el=conocido_el, primera_publicacion=primera_publicacion)
         ult = self._validar_cierres(simbolo, df[df.index == df.index.max()])
         return ult.index[-1], float(ult.iloc[-1])
 

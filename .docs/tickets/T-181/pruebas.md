@@ -20,3 +20,16 @@ La regresión adicional de PB-24 interrumpe la escritura de la afirmación despu
 Integración con T-183. La lista de evidencias que conserva F3 se calcula después de enlazar los documentos y descartar las reproducciones. M17 en la copia portada r02 vacía esa lista final y comprueba que el ciclo detecta la pérdida del respaldo. En el ejecutor, el ciclo llama al registro de clase y F3 lee la lista después de que termine la transacción. El cargador de opciones previas reconstruye la lista desde F3. Ninguno de estos lectores usa la acumulación provisional eliminada.
 
 En el recálculo de F3, la lista admisible de estados de verificación ya excluye todas las retiradas. M3 se porta a esa regla y añade FUENTE_RETIRADA entre los estados admisibles. El caso OPP-5 exige reevaluación cuando solo sobrevive una fuente secundaria B.
+
+## Corrección local del 26-11-2026 sobre c4f2d1b
+
+Las dos variantes de `test_retractacion_cli_al_corte_y_tras_interrupcion` fallaron en el código de partida y pasan tras la corrección. Ambas invocan `verificar-enlaces` y confirman la retractación con la huella del informe generado por HT-02. Solo se simulan el transporte HTTP del editor y, en el caso de recuperación, una interrupción al entregar el aviso.
+
+- **Consulta histórica.** Antes y después de retirar el 5 de junio una fuente primaria A publicada en 2020, el corte del 4 ofrece los mismos metadatos. Se comprueban el lector en memoria, uno recién abierto, la fecha de publicación, la retirada desde el día 5 y el uso de la fuente en el flujo de evidencia de un bloque con reloj del día 4. F2 recibe el nivel A, el tipo primario y el año 2020.
+- **Recuperación.** El primer intento guarda la baja y falla antes de entregar el CT-11. Repetir el mismo comando y el mismo fichero de decisiones retira la EVD y registra un único aviso. Un tercer intento conserva exactamente las filas de F2. Una decisión con otra huella sigue rechazándose. También se verifica que un barrido posterior sin red puede reconocer una retractación ya aplicada.
+- **Lote de decisiones.** La retransmisión de una degradación y una retractación en el mismo archivo conserva Q 75 (B) y una sola baja. Cambiar el motivo invalida el reconocimiento de la decisión anterior.
+- **Registros preexistentes.** Las bajas de cinco columnas conservan lectura, fecha y motivo. Una fila antigua sin copia de la ficha carece de los datos para reconstruir Q, temática y año. Tampoco acredita una decisión nueva del custodio.
+
+Con Python 3.12, las 33 pruebas de T-181 pasaron. La selección de T-181, T-182, T-183, T-184, T-125, T-140 y V5 pasó sus 170 casos. Los servicios de red se sustituyeron por transporte local en los casos nuevos.
+
+Las dos baterías de mutantes detectaron las 8 alteraciones originales y las 18 portadas. El programa funcional r01 mantiene la discrepancia documentada con H-06 respecto al rechazo de una fecha imposible.

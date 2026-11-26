@@ -96,16 +96,39 @@ def test_minimo_por_grupo_con_configuracion_de_entrega(tmp_path, universo):
             b.almacen.escribir("F3", "AG-02", {"opp_id": oid, "tipo_entrada": "DECISION_BROKER",
                               "decision_broker": {"decision": decision, "fecha": AS_OF}})
             b.almacen.escribir("F4", "AG-10", {"prg_id": f"PRG-{oid}", "opp_id": oid, "tipo_entrada": "ALTA",
+                              "clase": "DIV", "horizonte": "H1", "sentido": "POSITIVO", "prob_interna": 0.5,
+                              "referencia_ingenua": {"valor_o_prob": 0.5},
                               "estado": "ABIERTO", "en_informe": True, "fecha_emision": AS_OF, "fecha_resolucion": "2026-06-15"})
     fecha = b.fijar_fecha("2026-06-15")
     for i in range(minimo):
         for decision, acierto in (("ENVIADA_A_BLOQUE_B", 1), ("DESCARTADA", 0)):
             b.almacen.escribir("F4", "AG-20", {"prg_id": f"PRG-OPP-{decision}-{i}", "estado": "RESUELTO",
                               "tipo_entrada": "RESOLUCION", "resolucion": {"fecha_dato": "2026-06-15",
+                              "valor_observado": 0.01 if acierto else -0.01, "fecha_resuelto": "2026-06-15",
                               "resultado_binario": acierto, "comprobacion_fuga": "SUPERADA"}})
         if i == minimo - 2:
             assert b.evaluador.comparar_decisiones_broker(fecha) is None
-    lec = b.evaluador.comparar_decisiones_broker(fecha)
+    ciclo = b.evaluador.ciclo(fecha)
+    lec, = [l for l in ciclo["lecciones_nuevas"] if l["tipo"] == "PRODUCTO"]
     assert lec["n"] == 2 * minimo
     assert lec["observacion"] == f"enviadas: {minimo}/{minimo} pronósticos con acierto. descartadas: 0/{minimo} pronósticos con acierto"
     _comprobar_entrega(b, lec, {"AG-02", "AG-17"}, fecha)
+
+
+def test_cada_duda_recurrente_conserva_su_leccion(tmp_path, universo):
+    from bloque_a.configuracion import cargar_config
+
+    b = nuevo_bloque(tmp_path, universo, cfg=cargar_config())
+    preguntas = ("¿Cuál es la divisa de referencia?", "¿Cuál es la fecha del informe?")
+    evidencias = {texto: [] for texto in preguntas}
+    for i in range(4):
+        for texto in preguntas:
+            consulta = b.consultas.enviar({
+                "tipo": "DATO_O_DOCUMENTO", "run_id": f"RUN-2026-{i + 1:04d}",
+                "preguntas": [{"texto": texto, "supuesto_declarado": "El anterior"}],
+            }, AS_OF)
+            evidencias[texto].append(consulta["cns_id"])
+    lecciones = [e for e in b.almacen.leer("F6") if e.get("tipo") == "PRODUCTO"]
+    assert sorted(e["evidencia"] for e in lecciones) == sorted(ids[:3] for ids in evidencias.values())
+    for lec in lecciones:
+        _comprobar_entrega(b, lec, {"AG-01", "AG-17"}, AS_OF)

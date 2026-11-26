@@ -6,6 +6,7 @@ Todo texto pasa por el saneamiento R9 antes de llegar a un agente.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -71,13 +72,58 @@ def conocible_desde(ref: dict) -> str | None:
     return f"{anio:04d}-12-31" if anio is not None else None
 
 
+def metadatos_ficha(ficha, archivo):
+    tem = ficha.campo("Temática", "Ámbito metodológico") or ""
+    m = re.search(r"\b(T[AMF]-\d{2}|MB-\d{2})\b", tem)
+    return {"ref_id": ficha.id, "archivo": archivo, "titulo": ficha.titulo, "q": ficha.q, "nivel": ficha.nivel,
+            "tematica": m.group(1) if m else None, "anio": _anio(ficha),
+            "tipologia": (ficha.campo("Tipología", "Tipo de documento", "Tipo de fuente") or "")[:80],
+            "fuente_original": ficha.campo("Fuente original", "Referencia original"),
+            "estado_enlace": ficha.campo("Estado del enlace")}
+
+
+MARCA_HISTORIAL = "<!-- RI-ficha-retirada-v1 "
+
+
+def lineas_registro(lineas):
+    nivel = 0
+    for numero, linea in enumerate(lineas, 1):
+        titulo = ht02.modulo.RE_TITULO.match(linea)
+        if titulo:
+            profundidad = len(titulo.group(1))
+            if "registro de bajas" in ht02.modulo._norm_clave(linea):
+                nivel = profundidad
+            elif profundidad <= nivel:
+                nivel = 0
+        elif nivel:
+            yield numero, linea
+
+
+def historial_bajas(lineas, bajas, archivo):
+    """Solo admite instantáneas acompañadas por su baja en la tabla del mismo catálogo."""
+    for numero, linea in lineas_registro(lineas):
+        texto = linea.rstrip()
+        if texto.startswith(MARCA_HISTORIAL) and texto.endswith(" -->"):
+            try:
+                registro = json.loads(texto[len(MARCA_HISTORIAL):-4])
+                ficha = registro["ficha"]
+                clave = (ficha["ref_id"], registro["fecha"])
+                coincide = ficha["archivo"] == archivo and clave in bajas
+            except (TypeError, ValueError, KeyError) as exc:
+                raise ValueError(f"{archivo}, fila {numero}: instantánea de baja inválida") from exc
+            if coincide:
+                yield registro
+
+
 class Referencias:
     registro_bajas_f9: Path | None = None
 
-    def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None) -> None:
+    def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None, *, reloj=None) -> None:
+        self.reloj = reloj
         base = ruta(cfg, "archivos_operativos")
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
         self.fichas: Dict[str, List[Dict]] = {}
+        self.historicas: dict[str, list[dict]] = {}
         self.bajas: dict[str, list[tuple[str, str]]] = {}
         self.motivos_bajas: dict[tuple[str, str, str], str] = {}
         self._firmas: dict[str, tuple | None] = {}
@@ -92,6 +138,7 @@ class Referencias:
             if k in self._firmas and firma == self._firmas[k]:
                 continue
             self.fichas[k] = []
+            self.historicas[k] = []
             self.bajas[k] = []
             self.motivos_bajas = {clave: m for clave, m in self.motivos_bajas.items() if clave[0] != k}
             if not stat:
@@ -102,14 +149,9 @@ class Referencias:
                 for rid, dia, motivo in detalle_bajas(lineas, p):
                     self.bajas[k].append((rid, dia))
                     self.motivos_bajas[k, "REF-" + rid, dia] = motivo
+                self.historicas[k] = list(historial_bajas(lineas, set(self.bajas[k]), k))
             for f in ht02.leer_fichas(lineas):
-                tem = f.campo("Temática", "Ámbito metodológico") or ""
-                m = re.search(r"\b(T[AMF]-\d{2}|MB-\d{2})\b", tem)
-                self.fichas[k].append({"ref_id": f.id, "archivo": k, "titulo": f.titulo, "q": f.q, "nivel": f.nivel,
-                                       "tematica": m.group(1) if m else None, "anio": _anio(f),
-                                       "tipologia": (f.campo("Tipología", "Tipo de documento", "Tipo de fuente") or "")[:80],
-                                       "fuente_original": f.campo("Fuente original", "Referencia original"),
-                                       "estado_enlace": f.campo("Estado del enlace")})
+                self.fichas[k].append(metadatos_ficha(f, k))
 
             self._firmas[k] = firma
 
@@ -121,10 +163,18 @@ class Referencias:
         return {"REF-" + rid for rid, dia in bajas_registradas(ruta.read_text(encoding="utf-8").splitlines())
                 if dia <= str(as_of)[:10]}
 
-    def por_id(self, ref_id: str, as_of="9999-12-31") -> Optional[Dict]:
+    def _fichas_al_corte(self, archivo, as_of):
+        yield from self.fichas.get(archivo, [])
+        for registro in self.historicas.get(archivo, []):
+            if str(as_of)[:10] < registro["fecha"]:
+                yield registro["ficha"]
+
+    def por_id(self, ref_id: str, as_of=None) -> Optional[Dict]:
+        if as_of is None:
+            as_of = self.reloj.fecha if self.reloj is not None else "9999-12-31"
         rid = ref_id.replace("REF-", "")
-        for lst in self.fichas.values():
-            for r in lst:
+        for archivo in self.fichas:
+            for r in self._fichas_al_corte(archivo, as_of):
                 if r["ref_id"] == rid:
                     if r["archivo"] == "F9" and "REF-" + rid in self.retiradas_f9(as_of):
                         return {**r, "estado_enlace": "RETIRADA"}
@@ -138,7 +188,7 @@ class Referencias:
         sel, hallazgos = [], []
         retiradas = self.retiradas_f9(as_of)
         for a in archivos:
-            cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem and "REF-" + r["ref_id"] not in retiradas]
+            cand = [r for r in self._fichas_al_corte(a, corte) if r["tematica"] in tem and "REF-" + r["ref_id"] not in retiradas]
             if modo == "backtest":
                 cand = [r for r in cand if ((conocible_desde(r) or "9999") <= corte) or (a == "F9" and r["anio"] is None)]
             cand.sort(key=lambda r: (-(r["q"] or 0), r["ref_id"]))

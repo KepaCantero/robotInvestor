@@ -167,7 +167,8 @@
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial",
    "11_Ejecutor/tests/test_t188_producto.py::test_comparacion_por_decision",
-   "11_Ejecutor/tests/test_t188_producto.py::test_muestra_temporal_e_idempotencia"
+   "11_Ejecutor/tests/test_t188_producto.py::test_muestra_temporal_e_idempotencia",
+   "11_Ejecutor/tests/test_t188_producto.py::test_minimo_por_grupo_con_configuracion_de_entrega"
   ],
   "comprueba": "La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B. Con muestra suficiente por grupo (evaluacion.min_calibrar), el Evaluador escribe en F6 una lección de PRODUCTO que compara aciertos de enviadas y descartadas con decisiones anteriores al dato. La reciben AG-17 y AG-02.",
   "no_comprueba": ""
@@ -352,10 +353,13 @@
    "11_Ejecutor/tests/test_t181_fuentes.py::test_informe_sin_respuesta_y_revision_sin_observacion",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_motivo_no_apto",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_bordes_de_calidad",
-   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_alternativa_o_doi_sin_verificar"
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_alternativa_o_doi_sin_verificar",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_retractacion_cli_al_corte_y_tras_interrupcion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_reintento_lote_con_degradacion_y_retractacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_antigua_sin_instantanea"
   ],
-  "comprueba": "Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2.",
-  "no_comprueba": ""
+  "comprueba": "Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2. La retractación conserva la ficha para cortes anteriores y el mismo comando recupera un aviso interrumpido.",
+  "no_comprueba": "Las bajas antiguas sin copia de la ficha conservan solo los datos del registro."
  },
  "PB-26": {
   "cobertura": "AUTOMATICA",
@@ -486,9 +490,11 @@
    "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion",
    "11_Ejecutor/tests/test_t192_evaluacion.py::test_recalcular_referencia_sin_futuro",
    "11_Ejecutor/tests/test_t192_evaluacion.py::test_recalculo_pendiente_y_reintento",
-   "11_Ejecutor/tests/test_t192_evaluacion.py::test_recupera_el_aviso_si_la_escritura_de_ha_falla"
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_recupera_el_aviso_si_la_escritura_de_ha_falla",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_resolver_con_ediciones_visibles",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_tasa_historica_solo_con_publicaciones_conocidas"
   ],
-  "comprueba": "Los datos posteriores a la emisión dejan la resolución FALLIDA fuera del cálculo de métricas del día. F6 registra la corrección de la tasa base con el corte original y las puntuaciones de referencia recalculadas. Las métricas usan la corrección y HA registra el aviso al Orquestador. Un reintento recupera la comunicación pendiente.",
+  "comprueba": "Los datos posteriores a la emisión dejan la resolución FALLIDA fuera del cálculo de métricas del día. F6 registra la corrección de la tasa base con el corte original y las puntuaciones de referencia recalculadas. Las métricas usan la corrección y HA registra el aviso al Orquestador. Un reintento recupera la comunicación pendiente. Con dos publicaciones de una observación se utiliza la primera y el recálculo respeta la información disponible al emitir.",
   "no_comprueba": "No se ha usado un proveedor macroeconómico real con histórico de revisiones."
  },
  "PB-35": {
@@ -923,9 +929,10 @@
   "pruebas": [
    "11_Ejecutor/tests/test_v51.py::test_consulta_validaciones_agrupacion_y_entrante",
    "11_Ejecutor/tests/test_t188_producto.py::test_recurrencia_entre_analisis",
-   "11_Ejecutor/tests/test_t188_producto.py::test_recurrencia_exige_analisis_distintos_dentro_de_la_ventana"
+   "11_Ejecutor/tests/test_t188_producto.py::test_recurrencia_exige_analisis_distintos_dentro_de_la_ventana",
+   "11_Ejecutor/tests/test_t188_producto.py::test_cada_duda_recurrente_conserva_su_leccion"
   ],
-  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. La misma duda en tres análisis distintos en ocho semanas crea una lección de PRODUCTO para el CT-01 que reciben AG-01 y AG-17.",
+  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. La misma duda en tres análisis distintos en ocho semanas crea una lección de PRODUCTO para el CT-01 que reciben AG-01 y AG-17. Dos dudas recurrentes distintas conservan sus propias lecciones y evidencias.",
   "no_comprueba": "Qué dudas cambian una conclusión lo decide el modelo del Analizador (modo sombra)."
  },
  "PB-63": {
